@@ -13,6 +13,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -48,9 +49,11 @@ fun ExpenseEntryScreen(
     ) {
         var amountInput by remember { mutableStateOf("") }
         var descriptionInput by remember { mutableStateOf("") }
+        var expenseSaved by remember { mutableStateOf(false) }
 
         val amount = amountInput.toDoubleOrNull() ?: 0.0
         val description = descriptionInput
+        val expenseEntryResponse by expensesViewModel.state.collectAsState()
 
         Text(
             text = expenseSubCategory.subCategoryName,
@@ -67,7 +70,7 @@ fun ExpenseEntryScreen(
             singleLine = true,
             keyboardOptions = KeyboardOptions.Default.copy(
                 keyboardType = KeyboardType.Number,
-                imeAction = ImeAction.Next
+                imeAction = ImeAction.Done
             ),
             modifier = Modifier
                 .padding(bottom = 32.dp)
@@ -99,10 +102,24 @@ fun ExpenseEntryScreen(
                 ))
                 amountInput = ""
                 descriptionInput = ""
+                expenseSaved = true
             },
-            enabled = amountInput.isNotBlank() && amountInput.isNotEmpty()
+            enabled = amountInput.isNotBlank() && amountInput.isNotEmpty(),
+            modifier = Modifier.padding(bottom = 40.dp)
         ) {
             Text("Guardar gasto")
+        }
+        if (expenseSaved) {
+            Text(
+                text = "Monto anterior: ${expenseEntryResponse.previousAmount}",
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(bottom = 20.dp)
+            )
+            Text(
+                text = "Monto final: ${expenseEntryResponse.finalAmount}",
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(bottom = 20.dp)
+            )
         }
     }
 

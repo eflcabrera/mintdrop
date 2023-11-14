@@ -35,14 +35,16 @@ fun CategoryScreen(
     // val categoryViewModel: CategoryViewModel = hiltViewModel()
     val subCategories: List<ExpenseSubCategory> = category.subCategories.subList(1, category.subCategories.lastIndex)
 
-    Column(modifier = Modifier
-        .fillMaxSize()
-        .verticalScroll(rememberScrollState()),
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.Center
     ) {
-        Box(modifier = Modifier
-            .width(400.dp)
-            .height(36.dp)
+        Box(
+            modifier = Modifier
+                .width(400.dp)
+                .height(36.dp)
         ) {
             Text(
                 text = category.name,
