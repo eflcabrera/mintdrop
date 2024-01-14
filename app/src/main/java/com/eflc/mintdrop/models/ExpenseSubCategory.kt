@@ -11,11 +11,10 @@ import kotlinx.parcelize.Parcelize
 @Parcelize
 @JsonClass(generateAdapter = true)
 data class ExpenseSubCategory(
-    @Json(name = "name")
-    val subCategoryName: String,
+    override val name: String,
     @Json(name = "rowNumber")
     val rowNumber: Int
-) : Parcelable {
+) : Parcelable, GenericCategory {
     companion object NavigationType : NavType<ExpenseSubCategory>(isNullableAllowed = false) {
         override fun get(bundle: Bundle, key: String): ExpenseSubCategory? {
             return bundle.getParcelable(key)

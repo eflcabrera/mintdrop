@@ -21,7 +21,7 @@ class HomeViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            val response = googleSheetsRepository.getCategories(Constants.GOOGLE_SHEET_ID_2023, Constants.EXPENSE_SHEET_NAME)
+            val response = googleSheetsRepository.getCategories(Constants.GOOGLE_SHEET_ID_2024, Constants.EXPENSE_SHEET_NAME)
             _state.value = response.categories
         }
     }
