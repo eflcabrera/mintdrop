@@ -44,7 +44,7 @@ fun HomeScreen(navComposable: NavController) {
     ) {
         Text(
             text = Constants.EXPENSE_SHEET_NAME,
-            fontSize = 24.sp,
+            fontSize = 20.sp,
             fontWeight = FontWeight.Bold,
             modifier = Modifier
                 .align(alignment = Alignment.Center)
@@ -63,7 +63,7 @@ fun HomeScreen(navComposable: NavController) {
         modifier = Modifier
             .fillMaxSize()
             .padding(top = 50.dp),
-        columns = GridCells.Adaptive(250.dp),
+        columns = GridCells.Adaptive(100.dp),
         verticalArrangement = Arrangement.Center,
         contentPadding = PaddingValues(horizontal = 20.dp)
     ) {
@@ -85,21 +85,21 @@ fun ExpenseCategoryCard(
     onClick: (category: ExpenseCategory) -> Unit
 ) {
     val iconMap = mapOf(
-        "Deuda" to R.drawable.baseline_debt_24,
-        "Educación" to R.drawable.baseline_school_24,
-        "Ocio" to R.drawable.baseline_leisure_24,
-        "Gastos diarios" to R.drawable.baseline_payments_24,
-        "Regalos" to R.drawable.baseline_card_giftcard_24,
-        "Salud/médicos" to R.drawable.baseline_medication_24,
-        "Vivienda" to R.drawable.baseline_home_24,
-        "Seguros" to R.drawable.baseline_security_24,
-        "Mascotas" to R.drawable.baseline_pets_24,
-        "Tecnología" to R.drawable.baseline_hardware_24,
-        "Transporte" to R.drawable.baseline_transport_24,
-        "Viajes" to R.drawable.baseline_travel_24,
-        "Servicios básicos" to R.drawable.baseline_services_24,
-        "Ahorro" to R.drawable.baseline_savings_24,
-        "Impuestos" to R.drawable.baseline_taxes_24
+        "Deuda" to R.drawable.apartment,
+        "Educación" to R.drawable.graduation_hat,
+        "Ocio" to R.drawable.dice,
+        "Gastos diarios" to R.drawable.cart,
+        "Regalos" to R.drawable.gift,
+        "Salud/médicos" to R.drawable.heart_pulse,
+        "Vivienda" to R.drawable.home,
+        "Seguros" to R.drawable.lock,
+        "Mascotas" to R.drawable.paw,
+        "Tecnología" to R.drawable.laptop_phone,
+        "Transporte" to R.drawable.car,
+        "Viajes" to R.drawable.map,
+        "Servicios básicos" to R.drawable.inbox,
+        "Ahorro" to R.drawable.star,
+        "Impuestos" to R.drawable.poop
     )
-    CategoryCard(iconMap = iconMap, category = category, onClick = { onClick(category) })
+    CategoryCard(iconMap = iconMap, category = category, onClick = { onClick(category) }, modifier = Modifier)
 }

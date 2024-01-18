@@ -20,22 +20,26 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.eflc.mintdrop.models.GenericCategory
 
 @Composable
 fun CategoryCard(
     iconMap: Map<String, Int>?,
     category: GenericCategory,
-    onClick: (category: GenericCategory) -> Unit
+    onClick: (category: GenericCategory) -> Unit,
+    modifier: Modifier,
+    fontSize: TextUnit = 12.sp
 ) {
     return Card(
         shape = MaterialTheme.shapes.medium,
-        modifier = Modifier
+        modifier = modifier
             .padding(8.dp)
             .width(320.dp)
             .shadow(
-                elevation = 10.dp,
+                elevation = 5.dp,
                 shape = MaterialTheme.shapes.medium
             )
             .clickable { onClick(category) }
@@ -59,7 +63,8 @@ fun CategoryCard(
                 text = category.name,
                 color = Color.Black,
                 textAlign = TextAlign.Center,
-                modifier = Modifier.padding(horizontal = 5.dp)
+                fontSize = fontSize,
+                modifier = Modifier.padding(horizontal = 5.dp, vertical = 5.dp)
             )
         }
     }

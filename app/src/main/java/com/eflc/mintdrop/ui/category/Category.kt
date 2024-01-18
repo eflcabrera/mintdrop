@@ -18,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.eflc.mintdrop.models.ExpenseCategory
 import com.eflc.mintdrop.models.ExpenseSubCategory
@@ -81,5 +82,5 @@ fun ExpenseSubCategoryCard(
 ) {
     val iconMap = mapOf("none" to 1)
 
-    CategoryCard(iconMap = iconMap, category = subCategory, onClick = { onClick(subCategory) })
+    CategoryCard(iconMap = iconMap, category = subCategory, onClick = { onClick(subCategory) }, modifier = Modifier, fontSize = 16.sp)
 }
