@@ -3,6 +3,7 @@ package com.eflc.mintdrop.ui.category
 import android.net.Uri
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -31,7 +32,6 @@ fun CategoryScreen(
     navComposable: NavController,
     category: ExpenseCategory
 ) {
-    // val categoryViewModel: CategoryViewModel = hiltViewModel()
     val subCategories: List<ExpenseSubCategory> = category.subCategories.subList(1, category.subCategories.lastIndex)
 
     Box(
@@ -61,7 +61,8 @@ fun CategoryScreen(
             .fillMaxSize()
             .padding(top = 36.dp),
         columns = GridCells.Fixed(2),
-        verticalArrangement = Arrangement.Center
+        verticalArrangement = Arrangement.Center,
+        contentPadding = PaddingValues(horizontal = 20.dp)
     ) {
         items(subCategories) { subcategory: ExpenseSubCategory ->
             ExpenseSubCategoryCard(

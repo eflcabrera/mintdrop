@@ -63,9 +63,9 @@ fun HomeScreen(navComposable: NavController) {
         modifier = Modifier
             .fillMaxSize()
             .padding(top = 50.dp),
-        columns = GridCells.Adaptive(100.dp),
+        columns = GridCells.Adaptive(140.dp),
         verticalArrangement = Arrangement.Center,
-        contentPadding = PaddingValues(horizontal = 20.dp)
+        contentPadding = PaddingValues(horizontal = 20.dp, vertical = 80.dp)
     ) {
         items(categories) { category: ExpenseCategory ->
             ExpenseCategoryCard(
