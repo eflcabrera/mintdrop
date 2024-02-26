@@ -42,35 +42,47 @@ fun HomeScreen(navController: NavHostController = rememberNavController()) {
         BottomNavigationItem(Constants.EXPENSE_SHEET_NAME, AppScreens.ExpenseScreen.route, Icons.Filled.ShoppingCart, Icons.Outlined.ShoppingCart),
         BottomNavigationItem(Constants.INCOME_SHEET_NAME, AppScreens.IncomeScreen.route, Icons.Filled.AddCircle, Icons.Outlined.AddCircle)
     )
+
+    Scaffold(
+        bottomBar = {
+            BottomNavigationBar(
+                items = items,
+                navController = navController
+            )
+        }
+    ) {
+        HomeNavigationGraph(navController = navController)
+    }
+}
+
+@Composable
+fun BottomNavigationBar(
+    items: List<BottomNavigationItem>,
+    navController: NavHostController
+) {
     var selectedItemIndex by rememberSaveable {
         mutableStateOf(0)
     }
 
-    Scaffold(
-        bottomBar = {
-            NavigationBar {
-                items.forEachIndexed { index, item ->
-                    NavigationBarItem(
-                        selected = selectedItemIndex == index,
-                        onClick = {
-                            selectedItemIndex = index
-                            navController.navigate(item.route)
-                        },
-                        label = { Text(text = item.title) },
-                        icon = {
-                            Icon(
-                                imageVector =
-                                    if (index == selectedItemIndex) {
-                                        item.selectedIcon
-                                    } else item.unselectedIcon,
-                                contentDescription = item.title
-                            )
-                        }
+    NavigationBar {
+        items.forEachIndexed { index, item ->
+            NavigationBarItem(
+                selected = selectedItemIndex == index,
+                onClick = {
+                    selectedItemIndex = index
+                    navController.navigate(item.route)
+                },
+                label = { Text(text = item.title) },
+                icon = {
+                    Icon(
+                        imageVector =
+                        if (index == selectedItemIndex) {
+                            item.selectedIcon
+                        } else item.unselectedIcon,
+                        contentDescription = item.title
                     )
                 }
-            }
+            )
         }
-    ) {
-        HomeNavigationGraph(navController = navController)
     }
 }
