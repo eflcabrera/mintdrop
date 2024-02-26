@@ -1,4 +1,4 @@
-package com.eflc.mintdrop.ui.home
+package com.eflc.mintdrop.ui.income
 
 import android.net.Uri
 import androidx.compose.foundation.layout.Arrangement
@@ -24,7 +24,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import com.eflc.mintdrop.R
 import com.eflc.mintdrop.models.ExpenseCategory
 import com.eflc.mintdrop.navigation.AppScreens
 import com.eflc.mintdrop.ui.card.CategoryCard
@@ -32,9 +31,10 @@ import com.eflc.mintdrop.utils.Constants
 import com.google.gson.Gson
 
 @Composable
-fun HomeScreen(navComposable: NavController) {
-    val homeViewModel: HomeViewModel = hiltViewModel()
+fun IncomeScreen(navComposable: NavController) {
+    val homeViewModel: IncomeViewModel = hiltViewModel()
     val categories by homeViewModel.state.collectAsState()
+    val sheet = Constants.INCOME_SHEET_NAME
 
     Box(
         contentAlignment = Alignment.Center,
@@ -43,7 +43,7 @@ fun HomeScreen(navComposable: NavController) {
             .height(36.dp)
     ) {
         Text(
-            text = Constants.EXPENSE_SHEET_NAME,
+            text = Constants.INCOME_SHEET_NAME,
             fontSize = 20.sp,
             fontWeight = FontWeight.Bold,
             modifier = Modifier
@@ -72,7 +72,7 @@ fun HomeScreen(navComposable: NavController) {
                 category = category,
                 onClick = {
                     val categoryJson = Uri.encode(Gson().toJson(it))
-                    navComposable.navigate(route = AppScreens.CategoryScreen.route + "/$categoryJson")
+                    navComposable.navigate(route = AppScreens.CategoryScreen.route + "/$categoryJson/$sheet")
                 }
             )
         }
@@ -84,22 +84,6 @@ fun ExpenseCategoryCard(
     category: ExpenseCategory,
     onClick: (category: ExpenseCategory) -> Unit
 ) {
-    val iconMap = mapOf(
-        "Deuda" to R.drawable.apartment,
-        "Educación" to R.drawable.graduation_hat,
-        "Ocio" to R.drawable.dice,
-        "Gastos diarios" to R.drawable.cart,
-        "Regalos" to R.drawable.gift,
-        "Salud/médicos" to R.drawable.heart_pulse,
-        "Vivienda" to R.drawable.home,
-        "Seguros" to R.drawable.lock,
-        "Mascotas" to R.drawable.paw,
-        "Tecnología" to R.drawable.laptop_phone,
-        "Transporte" to R.drawable.car,
-        "Viajes" to R.drawable.map,
-        "Servicios básicos" to R.drawable.inbox,
-        "Ahorro" to R.drawable.star,
-        "Impuestos" to R.drawable.poop
-    )
+    val iconMap = mapOf("none" to 1)
     CategoryCard(iconMap = iconMap, category = category, onClick = { onClick(category) }, modifier = Modifier)
 }

@@ -1,4 +1,4 @@
-package com.eflc.mintdrop.ui.expenses
+package com.eflc.mintdrop.ui.expenseentry
 
 import androidx.lifecycle.ViewModel
 import com.eflc.mintdrop.models.ExpenseEntryRequest
@@ -13,7 +13,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class ExpensesViewModel @Inject constructor(
+class ExpenseEntryViewModel @Inject constructor(
     private val googleSheetsRepository: GoogleSheetsRepository,
     private val coroutineScope: CoroutineScope
 ) : ViewModel() {

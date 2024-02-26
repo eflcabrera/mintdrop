@@ -5,4 +5,5 @@ object Constants {
     const val GOOGLE_SHEET_ID_2024 = "1BciP4nmAm0Zx3_w2Jc56fjbNUuQDcFDtmMNXxcq8pTg"
     const val EXPENSE_SHEET_NAME = "Gastos"
     const val INCOME_SHEET_NAME = "Ingresos"
+    const val SETTINGS_SHEET_NAME = "Configuración"
 }

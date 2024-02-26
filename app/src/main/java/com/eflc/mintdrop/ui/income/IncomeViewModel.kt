@@ -1,4 +1,4 @@
-package com.eflc.mintdrop.ui.home
+package com.eflc.mintdrop.ui.income
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -12,7 +12,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class HomeViewModel @Inject constructor(
+class IncomeViewModel @Inject constructor(
     private val googleSheetsRepository: GoogleSheetsRepository
 ) : ViewModel() {
     private val _state = MutableStateFlow(emptyList<ExpenseCategory>())
@@ -21,7 +21,7 @@ class HomeViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            val response = googleSheetsRepository.getCategories(Constants.GOOGLE_SHEET_ID_2024, Constants.EXPENSE_SHEET_NAME)
+            val response = googleSheetsRepository.getCategories(Constants.GOOGLE_SHEET_ID_2024, Constants.INCOME_SHEET_NAME)
             _state.value = response.categories
         }
     }

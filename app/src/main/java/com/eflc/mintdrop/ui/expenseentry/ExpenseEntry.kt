@@ -1,4 +1,4 @@
-package com.eflc.mintdrop.ui.expenses
+package com.eflc.mintdrop.ui.expenseentry
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -27,7 +27,6 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.navigation.NavController
 import com.eflc.mintdrop.models.ExpenseEntryRequest
 import com.eflc.mintdrop.models.ExpenseSubCategory
 import com.eflc.mintdrop.utils.Constants
@@ -36,10 +35,10 @@ import java.time.LocalDate
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ExpenseEntryScreen(
-    navComposable: NavController,
-    expenseSubCategory: ExpenseSubCategory
+    expenseSubCategory: ExpenseSubCategory,
+    sheet: String
 ) {
-    val expensesViewModel: ExpensesViewModel = hiltViewModel()
+    val expenseEntryViewModel: ExpenseEntryViewModel = hiltViewModel()
 
     Column(
         modifier = Modifier
@@ -55,7 +54,7 @@ fun ExpenseEntryScreen(
 
         val amount = amountInput.toDoubleOrNull() ?: 0.0
         val description = descriptionInput
-        val expenseEntryResponse by expensesViewModel.state.collectAsState()
+        val expenseEntryResponse by expenseEntryViewModel.state.collectAsState()
 
         Text(
             text = expenseSubCategory.name,
@@ -97,10 +96,11 @@ fun ExpenseEntryScreen(
 
         Button(
             onClick = {
-                expensesViewModel.postExpense(buildExpenseEntryRequest(
+                expenseEntryViewModel.postExpense(buildExpenseEntryRequest(
                     row = expenseSubCategory.rowNumber,
                     amount = amount,
-                    description = description
+                    description = description,
+                    sheet = sheet
                 ))
                 amountInput = ""
                 descriptionInput = ""
@@ -132,11 +132,12 @@ internal fun buildExpenseEntryRequest(
     row: Int,
     amount: Double,
     description: String = "",
-    month: Int = LocalDate.now().monthValue
+    month: Int = LocalDate.now().monthValue,
+    sheet: String
 ): ExpenseEntryRequest {
     return ExpenseEntryRequest(
         spreadsheetId = Constants.GOOGLE_SHEET_ID_2024,
-        sheetName = Constants.EXPENSE_SHEET_NAME,
+        sheetName = sheet,
         month = month,
         amount = amount,
         description = description,

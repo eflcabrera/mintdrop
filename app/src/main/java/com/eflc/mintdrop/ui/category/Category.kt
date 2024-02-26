@@ -30,7 +30,8 @@ import com.google.gson.Gson
 @Composable
 fun CategoryScreen(
     navComposable: NavController,
-    category: ExpenseCategory
+    category: ExpenseCategory,
+    sheet: String
 ) {
     val subCategories: List<ExpenseSubCategory> = category.subCategories.subList(1, category.subCategories.lastIndex)
 
@@ -69,7 +70,7 @@ fun CategoryScreen(
                 subCategory = subcategory,
                 onClick = {
                     val subcategoryJson = Uri.encode(Gson().toJson(it))
-                    navComposable.navigate(route = AppScreens.ExpenseEntryScreen.route + "/$subcategoryJson")
+                    navComposable.navigate(route = AppScreens.ExpenseEntryScreen.route + "/$subcategoryJson/$sheet")
                 }
             )
         }
