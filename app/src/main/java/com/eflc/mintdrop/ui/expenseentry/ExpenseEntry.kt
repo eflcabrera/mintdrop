@@ -100,7 +100,10 @@ fun ExpenseEntryScreen(
                     row = expenseSubCategory.rowNumber,
                     amount = amount,
                     description = description,
-                    sheet = sheet
+                    sheet = sheet,
+                    isOwedInstallments = false,
+                    totalInstallments = 1,
+                    paymentMethod = ""
                 ))
                 amountInput = ""
                 descriptionInput = ""
@@ -133,7 +136,10 @@ internal fun buildExpenseEntryRequest(
     amount: Double,
     description: String = "",
     month: Int = LocalDate.now().monthValue,
-    sheet: String
+    sheet: String,
+    isOwedInstallments: Boolean,
+    totalInstallments: Int,
+    paymentMethod: String
 ): ExpenseEntryRequest {
     return ExpenseEntryRequest(
         spreadsheetId = Constants.GOOGLE_SHEET_ID_2024,
@@ -141,6 +147,9 @@ internal fun buildExpenseEntryRequest(
         month = month,
         amount = amount,
         description = description,
-        row = row
+        row = row,
+        isOwedInstallments = isOwedInstallments,
+        totalInstallments = totalInstallments,
+        paymentMethod = paymentMethod
     )
 }
