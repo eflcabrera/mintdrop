@@ -11,6 +11,7 @@ import kotlinx.parcelize.Parcelize
 @Parcelize
 @JsonClass(generateAdapter = true)
 data class ExpenseCategory(
+    override val id: String,
     override val name: String,
     @Json(name = "subcategories")
     val subCategories: List<ExpenseSubCategory>

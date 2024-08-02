@@ -16,5 +16,11 @@ data class ExpenseEntryRequest(
     @Json(name = "amount")
     val amount: Double,
     @Json(name = "description")
-    val description: String
+    val description: String,
+    @Json(name = "isOwedInstallments")
+    val isOwedInstallments: Boolean,
+    @Json(name = "totalInstallments")
+    val totalInstallments: Int,
+    @Json(name = "paymentMethod")
+    val paymentMethod: String
 )
