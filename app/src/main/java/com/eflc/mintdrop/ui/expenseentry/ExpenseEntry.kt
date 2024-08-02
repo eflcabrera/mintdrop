@@ -55,6 +55,7 @@ fun ExpenseEntryScreen(
         val amount = amountInput.toDoubleOrNull() ?: 0.0
         val description = descriptionInput
         val expenseEntryResponse by expenseEntryViewModel.state.collectAsState()
+        val saveButtonLabel = if (sheet == Constants.EXPENSE_SHEET_NAME) "gasto" else "ingreso"
 
         Text(
             text = expenseSubCategory.name,
@@ -66,7 +67,7 @@ fun ExpenseEntryScreen(
             value = amountInput,
             onValueChange = { amountInput = it },
             label = {
-                Text("Ingresar gasto")
+                Text("Ingresar $saveButtonLabel")
             },
             singleLine = true,
             keyboardOptions = KeyboardOptions.Default.copy(
@@ -113,7 +114,7 @@ fun ExpenseEntryScreen(
             enabled = amountInput.isNotBlank() && amountInput.isNotEmpty(),
             modifier = Modifier.padding(bottom = 40.dp)
         ) {
-            Text(text = "Guardar gasto", color = Color.Black)
+            Text(text = "Guardar $saveButtonLabel", color = Color.Black)
         }
         if (expenseSaved) {
             Text(
