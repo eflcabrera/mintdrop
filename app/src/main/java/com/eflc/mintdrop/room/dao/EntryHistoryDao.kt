@@ -1,10 +1,10 @@
-package com.eflc.mintdrop.repository.dao
+package com.eflc.mintdrop.room.dao
 
 import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Query
 import androidx.room.Upsert
-import com.eflc.mintdrop.repository.dao.entity.EntryHistory
+import com.eflc.mintdrop.room.dao.entity.EntryHistory
 import kotlinx.coroutines.flow.Flow
 
 @Dao

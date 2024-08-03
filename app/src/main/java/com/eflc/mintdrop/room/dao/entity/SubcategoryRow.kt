@@ -1,4 +1,4 @@
-package com.eflc.mintdrop.repository.dao.entity
+package com.eflc.mintdrop.room.dao.entity
 
 import androidx.room.ColumnInfo
 import androidx.room.Entity

@@ -1,9 +1,9 @@
-package com.eflc.mintdrop.repository.dao
+package com.eflc.mintdrop.room.dao
 
 import androidx.room.Dao
 import androidx.room.Query
 import androidx.room.Upsert
-import com.eflc.mintdrop.repository.dao.entity.SubcategoryRow
+import com.eflc.mintdrop.room.dao.entity.SubcategoryRow
 
 @Dao
 interface SubcategoryRowDao {
