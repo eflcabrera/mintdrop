@@ -1,5 +1,6 @@
 package com.eflc.mintdrop.repository.impl
 
+import com.eflc.mintdrop.models.EntryType
 import com.eflc.mintdrop.repository.CategoryRepository
 import com.eflc.mintdrop.room.dao.CategoryDao
 import com.eflc.mintdrop.room.dao.entity.Category
@@ -26,6 +27,12 @@ class CategoryRepositoryImpl @Inject constructor(
     override suspend fun findCategoryById(id: Long): CategoryAndSubcategory {
         return withContext(IO) {
             dao.getCategory(id)
+        }
+    }
+
+    override suspend fun findCategoriesByType(entryType: EntryType): List<CategoryAndSubcategory> {
+        return withContext(IO) {
+            dao.getCategoriesByType(entryType)
         }
     }
 }

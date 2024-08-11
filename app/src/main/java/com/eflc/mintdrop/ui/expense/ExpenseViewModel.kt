@@ -37,7 +37,7 @@ class ExpenseViewModel @Inject constructor(
         viewModelScope.launch(IO) {
             var categories = mutableListOf<ExpenseCategory>()
 
-            var data: List<CategoryAndSubcategory> = categoryRepository.findAllCategories()
+            var data: List<CategoryAndSubcategory> = categoryRepository.findCategoriesByType(EntryType.EXPENSE)
 
             if (data.isEmpty()) {
                 val response = googleSheetsRepository.getCategories(Constants.GOOGLE_SHEET_ID_2024, Constants.EXPENSE_SHEET_NAME)
