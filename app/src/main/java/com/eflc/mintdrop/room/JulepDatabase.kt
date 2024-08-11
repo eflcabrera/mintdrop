@@ -24,7 +24,7 @@ import com.eflc.mintdrop.room.dao.entity.SubcategoryRow
 @TypeConverters(Converters::class)
 abstract class JulepDatabase: RoomDatabase() {
     abstract val categoryDao: CategoryDao
-    abstract val subcategory: SubcategoryDao
+    abstract val subcategoryDao: SubcategoryDao
     abstract val subcategoryRowDao: SubcategoryRowDao
     abstract val entryHistoryDao: EntryHistoryDao
 }

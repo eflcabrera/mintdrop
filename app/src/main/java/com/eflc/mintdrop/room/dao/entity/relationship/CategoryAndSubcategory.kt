@@ -8,8 +8,9 @@ import com.eflc.mintdrop.room.dao.entity.Subcategory
 data class CategoryAndSubcategory(
     @Embedded val category: Category,
     @Relation(
-        parentColumn = "id",
-        entityColumn = "category_id"
+        parentColumn = "uid",
+        entityColumn = "category_id",
+        entity = Subcategory::class
     )
-    val subcategories: List<Subcategory>
+    val subcategories: List<SubcategoryAndSubcategoryRow>
 )

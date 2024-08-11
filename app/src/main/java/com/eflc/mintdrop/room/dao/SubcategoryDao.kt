@@ -12,13 +12,13 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface SubcategoryDao {
     @Upsert
-    suspend fun saveSubcategory(subcategory: Subcategory)
+    suspend fun saveSubcategory(subcategory: Subcategory): Long
 
     @Transaction
-    @Query("SELECT * FROM subcategory WHERE category_id = :categoryId ORDER BY id ASC")
-    fun getSubcategoriesByCategoryId(categoryId: Int): Flow<List<SubcategoryAndSubcategoryRow>>
+    @Query("SELECT * FROM subcategory WHERE category_id = :categoryId ORDER BY uid ASC")
+    fun getSubcategoriesByCategoryId(categoryId: Long): Flow<List<SubcategoryAndSubcategoryRow>>
 
     @Transaction
-    @Query("SELECT * FROM subcategory WHERE id = :subcategoryId")
-    fun getSubcategoryWithEntryHistory(subcategoryId: Int): Flow<List<SubcategoryAndEntryHistory>>
+    @Query("SELECT * FROM subcategory WHERE uid = :subcategoryId")
+    fun getSubcategoryWithEntryHistory(subcategoryId: Long): SubcategoryAndEntryHistory
 }

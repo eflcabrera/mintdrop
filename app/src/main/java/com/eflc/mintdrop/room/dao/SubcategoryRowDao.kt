@@ -8,8 +8,8 @@ import com.eflc.mintdrop.room.dao.entity.SubcategoryRow
 @Dao
 interface SubcategoryRowDao {
     @Upsert
-    suspend fun saveSubcategoryRow(subcategoryRow: SubcategoryRow)
+    suspend fun saveSubcategoryRow(subcategoryRow: SubcategoryRow): Long
 
     @Query("SELECT * FROM subcategory_row WHERE subcategory_id = :subcategoryId LIMIT 1")
-    fun findSubcategoryRowBySubcategoryId(subcategoryId: Int): SubcategoryRow
+    fun findSubcategoryRowBySubcategoryId(subcategoryId: Long): SubcategoryRow
 }

@@ -8,15 +8,15 @@ import java.time.LocalDateTime
 @Entity(tableName = "category")
 data class Category(
     @PrimaryKey(autoGenerate = true)
-    val id: Int = 0,
+    val uid: Long = 0,
     @ColumnInfo(name = "external_id")
     val externalId: String,
     @ColumnInfo(name = "name")
-    val name: String,
+    var name: String,
     @ColumnInfo(name = "icon_ref")
-    val iconRef: String,
+    val iconRef: String? = "",
     @ColumnInfo(name = "created_on")
     val createdOn: LocalDateTime = LocalDateTime.now(),
     @ColumnInfo(name = "last_modified")
-    val lastModified: LocalDateTime?
+    val lastModified: LocalDateTime? = null
 )

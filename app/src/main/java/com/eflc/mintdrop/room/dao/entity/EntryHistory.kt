@@ -9,17 +9,17 @@ import java.time.LocalDateTime
 @Entity(tableName = "entry_history", foreignKeys = [
     ForeignKey(
         entity = Subcategory::class,
-        parentColumns = ["id"],
-        childColumns = ["subcategoryId"],
+        parentColumns = ["uid"],
+        childColumns = ["subcategory_id"],
         onDelete = ForeignKey.RESTRICT,
         onUpdate = ForeignKey.CASCADE
     )
 ])
 data class EntryHistory(
     @PrimaryKey(autoGenerate = true)
-    val id: Int = 0,
+    val uid: Long = 0,
     @ColumnInfo(name = "subcategory_id")
-    val subcategoryId: Int,
+    val subcategoryId: Long,
     @ColumnInfo(name = "amount")
     val amount: Double,
     @ColumnInfo(name = "description")

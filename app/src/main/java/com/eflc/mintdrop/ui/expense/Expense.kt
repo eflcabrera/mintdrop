@@ -102,7 +102,7 @@ fun ExpenseCategoryCard(
         "Transporte" to R.drawable.car,
         "Viajes" to R.drawable.map,
         "Servicios básicos" to R.drawable.inbox,
-        "Ahorro" to R.drawable.star,
+        "Ahorro o Inversión" to R.drawable.star,
         "Impuestos" to R.drawable.poop
     )
     CategoryCard(iconMap = iconMap, category = category, onClick = { onClick(category) }, modifier = Modifier)

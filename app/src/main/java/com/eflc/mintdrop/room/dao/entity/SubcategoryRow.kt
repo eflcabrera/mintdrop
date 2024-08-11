@@ -8,8 +8,8 @@ import androidx.room.PrimaryKey
 @Entity(tableName = "subcategory_row", foreignKeys = [
     ForeignKey(
         entity = Subcategory::class,
-        parentColumns = ["id"],
-        childColumns = ["subcategoryId"],
+        parentColumns = ["uid"],
+        childColumns = ["subcategory_id"],
         onDelete = ForeignKey.RESTRICT,
         onUpdate = ForeignKey.CASCADE
     )
@@ -17,7 +17,7 @@ import androidx.room.PrimaryKey
 data class SubcategoryRow(
     @PrimaryKey(autoGenerate = false)
     @ColumnInfo(name = "subcategory_id")
-    val subcategoryId: Int,
+    val subcategoryId: Long,
     @ColumnInfo(name = "row_number")
     val rowNumber: Int,
 )

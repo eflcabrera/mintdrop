@@ -8,8 +8,9 @@ import com.eflc.mintdrop.room.dao.entity.Subcategory
 data class SubcategoryAndEntryHistory(
     @Embedded val subcategory: Subcategory,
     @Relation(
-        parentColumn = "id",
-        entityColumn = "subcategory_id"
+        parentColumn = "uid",
+        entityColumn = "subcategory_id",
+        entity = EntryHistory::class
     )
-    val subcategories: List<EntryHistory>
+    val entries: List<EntryHistory>
 )
