@@ -2,11 +2,17 @@ package com.eflc.mintdrop.room.dao.entity
 
 import androidx.room.ColumnInfo
 import androidx.room.Entity
+import androidx.room.Index
 import androidx.room.PrimaryKey
 import com.eflc.mintdrop.models.EntryType
 import java.time.LocalDateTime
 
-@Entity(tableName = "category")
+@Entity(
+    tableName = "category",
+    indices = [
+        Index(value = ["name", "type"], unique = true)
+    ]
+)
 data class Category(
     @PrimaryKey(autoGenerate = true)
     val uid: Long = 0,

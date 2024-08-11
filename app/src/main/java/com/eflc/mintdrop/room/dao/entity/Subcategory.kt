@@ -3,6 +3,7 @@ package com.eflc.mintdrop.room.dao.entity
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.ForeignKey
+import androidx.room.Index
 import androidx.room.PrimaryKey
 import java.time.LocalDateTime
 
@@ -14,6 +15,8 @@ import java.time.LocalDateTime
         onDelete = ForeignKey.RESTRICT,
         onUpdate = ForeignKey.CASCADE
     )
+], indices = [
+    Index(value = ["category_id", "name"], unique = true)
 ])
 data class Subcategory(
     @PrimaryKey(autoGenerate = true)

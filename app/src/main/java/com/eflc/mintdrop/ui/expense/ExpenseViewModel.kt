@@ -2,6 +2,7 @@ package com.eflc.mintdrop.ui.expense
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.eflc.mintdrop.models.EntryType
 import com.eflc.mintdrop.models.ExpenseCategory
 import com.eflc.mintdrop.models.ExpenseSubCategory
 import com.eflc.mintdrop.repository.CategoryRepository
@@ -49,7 +50,8 @@ class ExpenseViewModel @Inject constructor(
                     val categoryId = categoryRepository.saveCategory(
                         Category(
                             externalId = expenseCategory.id,
-                            name = expenseCategory.name
+                            name = expenseCategory.name,
+                            type = EntryType.EXPENSE
                         )
                     )
                     expenseCategory.subCategories.forEach {
