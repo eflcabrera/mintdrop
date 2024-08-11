@@ -24,10 +24,10 @@ object DatabaseModule {
         return Room.databaseBuilder(
             app,
             JulepDatabase::class.java,
-            "julep.db"
-        )
-        //   .addMigrations() later add migrations if u change the table
-            .build()
+            "julep.db")
+        .fallbackToDestructiveMigration()
+        .addMigrations()
+        .build()
     }
 
     @Provides

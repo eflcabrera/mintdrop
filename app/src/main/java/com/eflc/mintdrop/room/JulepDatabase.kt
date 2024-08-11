@@ -19,7 +19,7 @@ import com.eflc.mintdrop.room.dao.entity.SubcategoryRow
         SubcategoryRow::class,
         EntryHistory::class
     ],
-    version = 1
+    version = 2
 )
 @TypeConverters(Converters::class)
 abstract class JulepDatabase: RoomDatabase() {

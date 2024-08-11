@@ -5,7 +5,6 @@ import com.eflc.mintdrop.room.dao.CategoryDao
 import com.eflc.mintdrop.room.dao.entity.Category
 import com.eflc.mintdrop.room.dao.entity.relationship.CategoryAndSubcategory
 import kotlinx.coroutines.Dispatchers.IO
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
@@ -18,7 +17,7 @@ class CategoryRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun findAllCategories(): Flow<List<CategoryAndSubcategory>> {
+    override suspend fun findAllCategories(): List<CategoryAndSubcategory> {
         return withContext(IO) {
             dao.getCategories()
         }

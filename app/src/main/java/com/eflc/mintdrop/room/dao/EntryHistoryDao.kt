@@ -5,7 +5,6 @@ import androidx.room.Delete
 import androidx.room.Query
 import androidx.room.Upsert
 import com.eflc.mintdrop.room.dao.entity.EntryHistory
-import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface EntryHistoryDao {
@@ -16,5 +15,5 @@ interface EntryHistoryDao {
     suspend fun deleteEntryHistory(entryHistory: EntryHistory)
 
     @Query("SELECT * FROM entry_history WHERE subcategory_id = :subcategoryId ORDER BY date DESC")
-    fun getEntryHistoryBySubcategoryIdOrderByDate(subcategoryId: Int): Flow<List<EntryHistory>>
+    fun getEntryHistoryBySubcategoryIdOrderByDate(subcategoryId: Int): List<EntryHistory>
 }

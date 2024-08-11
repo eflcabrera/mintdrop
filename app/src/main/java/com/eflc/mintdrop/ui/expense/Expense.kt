@@ -19,6 +19,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -38,7 +39,12 @@ import com.google.gson.Gson
 @Composable
 fun ExpenseScreen(navComposable: NavController) {
     val expenseViewModel: ExpenseViewModel = hiltViewModel()
-    val categories by expenseViewModel.state.collectAsState()
+    
+    LaunchedEffect(key1 = true, block = {
+        expenseViewModel.getExpenseCategories()
+    })
+    
+    val categories by expenseViewModel.expenseCategoryList.collectAsState()
     val sheet = Constants.EXPENSE_SHEET_NAME
 
     Scaffold(
