@@ -1,6 +1,7 @@
 package com.eflc.mintdrop.room
 
 import androidx.room.TypeConverter
+import com.eflc.mintdrop.models.EntryType
 import java.time.LocalDateTime
 
 class Converters {
@@ -12,5 +13,15 @@ class Converters {
     @TypeConverter
     fun dateToTimestamp(date: LocalDateTime?): String? {
         return date?.toString()
+    }
+
+    @TypeConverter
+    fun stringToEntryType(type: String?): EntryType? {
+        return type?.let { EntryType.valueOf(it) }
+    }
+
+    @TypeConverter
+    fun entryTypeToString(entryType: EntryType?): String? {
+        return entryType?.name
     }
 }

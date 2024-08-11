@@ -3,6 +3,7 @@ package com.eflc.mintdrop.room.dao.entity
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import com.eflc.mintdrop.models.EntryType
 import java.time.LocalDateTime
 
 @Entity(tableName = "category")
@@ -13,6 +14,8 @@ data class Category(
     val externalId: String,
     @ColumnInfo(name = "name")
     var name: String,
+    @ColumnInfo(name = "type")
+    var type: EntryType,
     @ColumnInfo(name = "icon_ref")
     val iconRef: String? = "",
     @ColumnInfo(name = "created_on")
