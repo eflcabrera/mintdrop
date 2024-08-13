@@ -34,7 +34,7 @@ fun CategoryScreen(
     category: ExpenseCategory,
     sheet: String
 ) {
-    val subCategories: List<ExpenseSubCategory> = category.subCategories.subList(1, category.subCategories.lastIndex)
+    val subCategories: List<ExpenseSubCategory> = category.subCategories
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
