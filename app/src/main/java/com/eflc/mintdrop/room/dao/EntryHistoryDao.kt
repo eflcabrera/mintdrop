@@ -9,7 +9,7 @@ import com.eflc.mintdrop.room.dao.entity.EntryHistory
 @Dao
 interface EntryHistoryDao {
     @Upsert
-    suspend fun saveEntryHistory(entryHistory: EntryHistory)
+    suspend fun saveEntryHistory(entryHistory: EntryHistory): Long
 
     @Delete
     suspend fun deleteEntryHistory(entryHistory: EntryHistory)

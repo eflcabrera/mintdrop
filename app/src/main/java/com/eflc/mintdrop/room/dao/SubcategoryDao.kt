@@ -20,4 +20,7 @@ interface SubcategoryDao {
     @Transaction
     @Query("SELECT * FROM subcategory WHERE uid = :subcategoryId")
     fun getSubcategoryWithEntryHistory(subcategoryId: Long): SubcategoryAndEntryHistory
+
+    @Query("SELECT * FROM subcategory WHERE external_id = :externalId")
+    fun getSubcategoryByExternalId(externalId: String): Subcategory
 }

@@ -21,6 +21,7 @@ import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import java.time.LocalDateTime
 import javax.inject.Inject
 
 @HiltViewModel
@@ -32,6 +33,41 @@ class ExpenseViewModel @Inject constructor(
 ) : ViewModel() {
     private val _expenseCategoryList = MutableStateFlow(emptyList<ExpenseCategory>())
     val expenseCategoryList = _expenseCategoryList.asStateFlow()
+
+    fun syncExpenseCategories() {
+        viewModelScope.launch(IO) {
+            val response = googleSheetsRepository.getCategories(Constants.GOOGLE_SHEET_ID_2024, Constants.EXPENSE_SHEET_NAME)
+            var data: List<CategoryAndSubcategory> = categoryRepository.findCategoriesByType(EntryType.EXPENSE)
+
+            response.categories
+                .filter { it.name != "end" && !Strings.isEmptyOrWhitespace(it.id) }
+                .forEach { expenseCategory ->
+                    var dataCategory = data.find { it.category.externalId == expenseCategory.id }
+                    if (dataCategory != null) {
+                        dataCategory.category.name = expenseCategory.name
+                        dataCategory.category.lastModified = LocalDateTime.now()
+                        expenseCategory.subCategories
+                            .filter { it.name != "end" && !Strings.isEmptyOrWhitespace(it.id) }
+                            .forEach { expenseSubcategory ->
+                                var dataSubcategory = dataCategory.subcategories.find { it.subcategory.externalId == expenseSubcategory.id }
+                                if (dataSubcategory != null) {
+                                    dataSubcategory.subcategory.name = expenseSubcategory.name
+                                    dataSubcategory.subcategoryRow.rowNumber = expenseSubcategory.rowNumber
+                                    dataSubcategory.subcategory.lastModified = LocalDateTime.now()
+
+                                    subcategoryRepository.saveSubcategory(dataSubcategory.subcategory)
+                                    subcategoryRowRepository.saveSubcategoryRow(dataSubcategory.subcategoryRow)
+                                } else {
+                                    // Save a new subcategory with row for this category
+                                }
+                            }
+                        categoryRepository.saveCategory(dataCategory.category)
+                    } else {
+                        // Save a new category with subcategories
+                    }
+                }
+        }
+    }
 
     fun getExpenseCategories() {
         viewModelScope.launch(IO) {

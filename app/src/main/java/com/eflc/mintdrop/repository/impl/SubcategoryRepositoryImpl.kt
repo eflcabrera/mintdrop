@@ -29,4 +29,10 @@ class SubcategoryRepositoryImpl @Inject constructor(
             dao.getSubcategoryWithEntryHistory(subcategoryId)
         }
     }
+
+    override suspend fun findSubcategoryByExternalId(externalId: String): Subcategory {
+        return withContext(IO) {
+            dao.getSubcategoryByExternalId(externalId)
+        }
+    }
 }

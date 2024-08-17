@@ -27,10 +27,8 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.eflc.mintdrop.models.ExpenseEntryRequest
 import com.eflc.mintdrop.models.ExpenseSubCategory
 import com.eflc.mintdrop.utils.Constants
-import java.time.LocalDate
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -97,15 +95,7 @@ fun ExpenseEntryScreen(
 
         Button(
             onClick = {
-                expenseEntryViewModel.postExpense(buildExpenseEntryRequest(
-                    row = expenseSubCategory.rowNumber,
-                    amount = amount,
-                    description = description,
-                    sheet = sheet,
-                    isOwedInstallments = false,
-                    totalInstallments = 1,
-                    paymentMethod = ""
-                ))
+                expenseEntryViewModel.postExpense(amount, description, sheet, expenseSubCategory)
                 amountInput = ""
                 descriptionInput = ""
                 expenseSaved = true
@@ -129,28 +119,4 @@ fun ExpenseEntryScreen(
             )
         }
     }
-
-}
-
-internal fun buildExpenseEntryRequest(
-    row: Int,
-    amount: Double,
-    description: String = "",
-    month: Int = LocalDate.now().monthValue,
-    sheet: String,
-    isOwedInstallments: Boolean,
-    totalInstallments: Int,
-    paymentMethod: String
-): ExpenseEntryRequest {
-    return ExpenseEntryRequest(
-        spreadsheetId = Constants.GOOGLE_SHEET_ID_2024,
-        sheetName = sheet,
-        month = month,
-        amount = amount,
-        description = description,
-        row = row,
-        isOwedInstallments = isOwedInstallments,
-        totalInstallments = totalInstallments,
-        paymentMethod = paymentMethod
-    )
 }

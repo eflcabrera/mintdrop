@@ -19,5 +19,5 @@ data class SubcategoryRow(
     @ColumnInfo(name = "subcategory_id")
     val subcategoryId: Long,
     @ColumnInfo(name = "row_number")
-    val rowNumber: Int,
+    var rowNumber: Int,
 )
