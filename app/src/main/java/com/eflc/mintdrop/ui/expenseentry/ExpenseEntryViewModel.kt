@@ -1,6 +1,7 @@
 package com.eflc.mintdrop.ui.expenseentry
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.eflc.mintdrop.models.ExpenseEntryRequest
 import com.eflc.mintdrop.models.ExpenseEntryResponse
 import com.eflc.mintdrop.models.ExpenseSubCategory
@@ -11,9 +12,10 @@ import com.eflc.mintdrop.room.dao.entity.EntryHistory
 import com.eflc.mintdrop.utils.Constants
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -26,9 +28,11 @@ class ExpenseEntryViewModel @Inject constructor(
     private val entryHistoryRepository: EntryHistoryRepository,
     private val subcategoryRepository: SubcategoryRepository
 ) : ViewModel() {
-    private val _state = MutableStateFlow(ExpenseEntryResponse("", 0.0, 0.0))
-    val state: StateFlow<ExpenseEntryResponse>
-        get() = _state
+    private val _expenseEntryResponse = MutableStateFlow(ExpenseEntryResponse("", 0.0, 0.0))
+    val expenseEntryResponse = _expenseEntryResponse.asStateFlow()
+
+    private val _entryHistoryList = MutableStateFlow(emptyList<EntryHistory>())
+    val entryHistoryList = _entryHistoryList.asStateFlow()
 
     fun postExpense(amount: Double, description: String, sheet: String, expenseSubCategory: ExpenseSubCategory) {
         coroutineScope.launch {
@@ -55,7 +59,14 @@ class ExpenseEntryViewModel @Inject constructor(
                     paymentMethod = ""
                 )
             )
-            _state.value = expenseEntryResponse
+            _expenseEntryResponse.tryEmit(expenseEntryResponse)
+        }
+    }
+
+    fun getEntryHistory(subCategoryId: String) {
+        viewModelScope.launch(IO) {
+            val subcategory = subcategoryRepository.findSubcategoryByExternalId(subCategoryId)
+            _entryHistoryList.tryEmit(entryHistoryRepository.findEntryHistoryBySubcategoryId(subcategory.uid))
         }
     }
 

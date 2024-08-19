@@ -14,6 +14,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -28,6 +29,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.eflc.mintdrop.models.ExpenseSubCategory
+import com.eflc.mintdrop.room.dao.entity.EntryHistory
+import com.eflc.mintdrop.ui.card.EntryHistoryCard
 import com.eflc.mintdrop.utils.Constants
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -37,6 +40,12 @@ fun ExpenseEntryScreen(
     sheet: String
 ) {
     val expenseEntryViewModel: ExpenseEntryViewModel = hiltViewModel()
+
+    LaunchedEffect(key1 = true, block = {
+        expenseEntryViewModel.getEntryHistory(expenseSubCategory.id)
+    })
+
+    val history by expenseEntryViewModel.entryHistoryList.collectAsState()
 
     Column(
         modifier = Modifier
@@ -52,7 +61,8 @@ fun ExpenseEntryScreen(
 
         val amount = amountInput.toDoubleOrNull() ?: 0.0
         val description = descriptionInput
-        val expenseEntryResponse by expenseEntryViewModel.state.collectAsState()
+        val expenseEntryResponse by expenseEntryViewModel.expenseEntryResponse.collectAsState()
+
         val saveButtonLabel = if (sheet == Constants.EXPENSE_SHEET_NAME) "gasto" else "ingreso"
 
         Text(
@@ -117,6 +127,16 @@ fun ExpenseEntryScreen(
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(bottom = 20.dp)
             )
+        }
+        Column(
+            modifier = Modifier
+                .fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+        ) {
+            history.forEach { entry: EntryHistory ->
+                EntryHistoryCard(Modifier, entry)
+            }
         }
     }
 }

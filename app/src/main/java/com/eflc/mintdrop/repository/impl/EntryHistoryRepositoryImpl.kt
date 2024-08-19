@@ -15,4 +15,10 @@ class EntryHistoryRepositoryImpl @Inject constructor(
             dao.saveEntryHistory(entryHistory)
         }
     }
+
+    override suspend fun findEntryHistoryBySubcategoryId(subcategoryId: Long): List<EntryHistory> {
+        return withContext(IO) {
+            dao.getEntryHistoryBySubcategoryIdOrderByDate(subcategoryId)
+        }
+    }
 }
