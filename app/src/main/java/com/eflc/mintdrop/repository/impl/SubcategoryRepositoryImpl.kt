@@ -35,4 +35,10 @@ class SubcategoryRepositoryImpl @Inject constructor(
             dao.getSubcategoryByExternalId(externalId)
         }
     }
+
+    override suspend fun findLastSubcategoriesUsed(amount: Int): List<SubcategoryAndSubcategoryRow> {
+        return withContext(IO) {
+            dao.getLastXSubcategoriesOrderedByLastEntry(amount)
+        }
+    }
 }

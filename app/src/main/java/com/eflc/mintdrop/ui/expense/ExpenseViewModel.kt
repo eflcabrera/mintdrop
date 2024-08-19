@@ -34,6 +34,9 @@ class ExpenseViewModel @Inject constructor(
     private val _expenseCategoryList = MutableStateFlow(emptyList<ExpenseCategory>())
     val expenseCategoryList = _expenseCategoryList.asStateFlow()
 
+    private val _recentlyUsedList = MutableStateFlow(emptyList<ExpenseSubCategory>())
+    val recentlyUsedList = _recentlyUsedList.asStateFlow()
+
     fun syncExpenseCategories() {
         viewModelScope.launch(IO) {
             val response = googleSheetsRepository.getCategories(Constants.GOOGLE_SHEET_ID_2024, Constants.EXPENSE_SHEET_NAME)
@@ -122,6 +125,16 @@ class ExpenseViewModel @Inject constructor(
             }
 
             _expenseCategoryList.tryEmit(categories)
+        }
+    }
+
+    fun getRecentlyUsedSubcategories() {
+        viewModelScope.launch(IO) {
+            val lastUsed = subcategoryRepository.findLastSubcategoriesUsed(3)
+            val expSubCategoryList = lastUsed.map {
+                ExpenseSubCategory(id = it.subcategory.externalId, name = it.subcategory.name, rowNumber = it.subcategoryRow.rowNumber)
+            }
+            _recentlyUsedList.tryEmit(expSubCategoryList)
         }
     }
 }

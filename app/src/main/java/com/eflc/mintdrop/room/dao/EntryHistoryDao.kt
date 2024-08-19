@@ -16,7 +16,7 @@ interface EntryHistoryDao {
 
     @Query("""
         SELECT * FROM entry_history
-        WHERE subcategory_id = :subcategoryId AND date BETWEEN datetime('now', '-30 days') AND datetime('now', 'localtime')
+        WHERE subcategory_id = :subcategoryId AND date > datetime('now', '-30 days')
         ORDER BY date DESC
     """)
     fun getEntryHistoryBySubcategoryIdOrderByDate(subcategoryId: Long): List<EntryHistory>
