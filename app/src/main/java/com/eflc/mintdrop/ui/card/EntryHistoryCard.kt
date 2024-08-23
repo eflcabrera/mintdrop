@@ -38,14 +38,10 @@ fun EntryHistoryCard(
     val amount = format.format(entryHistory.amount)
 
     return Card(
-        shape = MaterialTheme.shapes.medium,
+        shape = MaterialTheme.shapes.extraSmall,
         modifier = modifier
-            .padding(8.dp)
-            .width(320.dp)
-            .shadow(
-                elevation = 5.dp,
-                shape = MaterialTheme.shapes.medium
-            )
+            .padding(4.dp)
+            .width(350.dp)
     ) {
         Row(
             horizontalArrangement = Arrangement.SpaceBetween,
