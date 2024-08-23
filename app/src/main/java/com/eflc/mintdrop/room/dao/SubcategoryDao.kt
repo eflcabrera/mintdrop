@@ -20,4 +20,10 @@ interface SubcategoryDao {
     @Transaction
     @Query("SELECT * FROM subcategory WHERE uid = :subcategoryId")
     fun getSubcategoryWithEntryHistory(subcategoryId: Long): SubcategoryAndEntryHistory
+
+    @Query("SELECT * FROM subcategory WHERE external_id = :externalId")
+    fun getSubcategoryByExternalId(externalId: String): Subcategory
+
+    @Query("SELECT * FROM subcategory ORDER BY last_entry_on DESC LIMIT :limit")
+    fun getLastXSubcategoriesOrderedByLastEntry(limit: Int): List<SubcategoryAndSubcategoryRow>
 }

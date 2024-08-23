@@ -26,13 +26,13 @@ data class Subcategory(
     @ColumnInfo(name = "external_id")
     val externalId: String,
     @ColumnInfo(name = "name")
-    val name: String,
+    var name: String,
     @ColumnInfo(name = "icon_ref")
     val iconRef: String? = "",
     @ColumnInfo(name = "created_on")
     val createdOn: LocalDateTime = LocalDateTime.now(),
     @ColumnInfo(name = "last_modified")
-    val lastModified: LocalDateTime? = null,
+    var lastModified: LocalDateTime? = null,
     @ColumnInfo(name = "last_entry_on")
-    val lastEntryOn: LocalDateTime? = null
+    var lastEntryOn: LocalDateTime? = null
 )

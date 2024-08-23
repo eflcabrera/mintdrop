@@ -8,4 +8,6 @@ interface SubcategoryRepository {
     suspend fun saveSubcategory(subcategoryEntity: Subcategory): Long
     suspend fun findAllSubcategoriesByCategoryId(categoryId: Long): List<SubcategoryAndSubcategoryRow>
     suspend fun findSubcategoryWithEntryHistory(subcategoryId: Long): SubcategoryAndEntryHistory
+    suspend fun findSubcategoryByExternalId(externalId: String): Subcategory
+    suspend fun findLastSubcategoriesUsed(amount: Int): List<SubcategoryAndSubcategoryRow>
 }

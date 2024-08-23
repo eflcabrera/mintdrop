@@ -27,5 +27,5 @@ data class Category(
     @ColumnInfo(name = "created_on")
     val createdOn: LocalDateTime = LocalDateTime.now(),
     @ColumnInfo(name = "last_modified")
-    val lastModified: LocalDateTime? = null
+    var lastModified: LocalDateTime? = null
 )

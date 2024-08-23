@@ -3,9 +3,11 @@ package com.eflc.mintdrop.di
 import android.app.Application
 import androidx.room.Room
 import com.eflc.mintdrop.repository.CategoryRepository
+import com.eflc.mintdrop.repository.EntryHistoryRepository
 import com.eflc.mintdrop.repository.SubcategoryRepository
 import com.eflc.mintdrop.repository.SubcategoryRowRepository
 import com.eflc.mintdrop.repository.impl.CategoryRepositoryImpl
+import com.eflc.mintdrop.repository.impl.EntryHistoryRepositoryImpl
 import com.eflc.mintdrop.repository.impl.SubcategoryRepositoryImpl
 import com.eflc.mintdrop.repository.impl.SubcategoryRowRepositoryImpl
 import com.eflc.mintdrop.room.JulepDatabase
@@ -46,5 +48,11 @@ object DatabaseModule {
     @Singleton
     fun provideSubcategoryRowRepository(db: JulepDatabase): SubcategoryRowRepository {
         return SubcategoryRowRepositoryImpl(db.subcategoryRowDao)
+    }
+
+    @Provides
+    @Singleton
+    fun provideEntryHistoryRepository(db: JulepDatabase): EntryHistoryRepository {
+        return EntryHistoryRepositoryImpl(db.entryHistoryDao)
     }
 }

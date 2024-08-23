@@ -17,6 +17,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
@@ -59,6 +60,7 @@ fun CategoryScreen(
         ) {
             items(subCategories) { subcategory: ExpenseSubCategory ->
                 ExpenseSubCategoryCard(
+                    modifier = Modifier,
                     subCategory = subcategory,
                     onClick = {
                         val subcategoryJson = Uri.encode(Gson().toJson(it))
@@ -72,10 +74,12 @@ fun CategoryScreen(
 
 @Composable
 fun ExpenseSubCategoryCard(
+    modifier: Modifier,
     subCategory: ExpenseSubCategory,
+    fontSize: TextUnit = 16.sp,
     onClick: (category: ExpenseSubCategory) -> Unit
 ) {
     val iconMap = mapOf("none" to 1)
 
-    CategoryCard(iconMap = iconMap, category = subCategory, onClick = { onClick(subCategory) }, modifier = Modifier, fontSize = 16.sp)
+    CategoryCard(iconMap = iconMap, category = subCategory, onClick = { onClick(subCategory) }, modifier = modifier, fontSize = fontSize)
 }
