@@ -1,4 +1,4 @@
-package com.eflc.mintdrop.ui.income
+package com.eflc.mintdrop.ui.screens.income
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope

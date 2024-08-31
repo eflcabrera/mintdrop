@@ -1,4 +1,4 @@
-package com.eflc.mintdrop.ui.expenseentry
+package com.eflc.mintdrop.ui.screens.expenseentry
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -34,14 +34,15 @@ class ExpenseEntryViewModel @Inject constructor(
     private val _entryHistoryList = MutableStateFlow(emptyList<EntryHistory>())
     val entryHistoryList = _entryHistoryList.asStateFlow()
 
-    fun postExpense(amount: Double, description: String, sheet: String, expenseSubCategory: ExpenseSubCategory) {
+    fun postExpense(amount: Double, description: String, sheet: String, isShared: Boolean, expenseSubCategory: ExpenseSubCategory) {
         coroutineScope.launch {
             val subcategory = subcategoryRepository.findSubcategoryByExternalId(expenseSubCategory.id)
             val entryHistory = EntryHistory(
                 subcategoryId = subcategory.uid,
                 amount = amount,
                 description = description,
-                lastModified = LocalDateTime.now()
+                lastModified = LocalDateTime.now(),
+                isShared = isShared
             )
             entryHistoryRepository.saveEntryHistory(entryHistory)
             subcategory.lastEntryOn = LocalDateTime.now()
@@ -59,7 +60,9 @@ class ExpenseEntryViewModel @Inject constructor(
                     paymentMethod = ""
                 )
             )
-            _expenseEntryResponse.tryEmit(expenseEntryResponse)
+            _expenseEntryResponse.tryEmit(expenseEntryResponse).also {
+                getEntryHistory(expenseSubCategory.id)
+            }
         }
     }
 

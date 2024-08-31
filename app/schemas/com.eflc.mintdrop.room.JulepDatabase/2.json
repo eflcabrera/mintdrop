@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 2,
-    "identityHash": "58bb6bcd48f41a4aefab2d06888b8490",
+    "identityHash": "fff13a4a405a1300e2b28b35ab9473db",
     "entities": [
       {
         "tableName": "category",
@@ -196,7 +196,7 @@
       },
       {
         "tableName": "entry_history",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`uid` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `subcategory_id` INTEGER NOT NULL, `amount` REAL NOT NULL, `description` TEXT NOT NULL, `date` TEXT NOT NULL, `created_on` TEXT NOT NULL, `last_modified` TEXT, FOREIGN KEY(`subcategory_id`) REFERENCES `subcategory`(`uid`) ON UPDATE CASCADE ON DELETE RESTRICT )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`uid` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `subcategory_id` INTEGER NOT NULL, `amount` REAL NOT NULL, `description` TEXT NOT NULL, `date` TEXT NOT NULL, `created_on` TEXT NOT NULL, `last_modified` TEXT, `is_shared` INTEGER, FOREIGN KEY(`subcategory_id`) REFERENCES `subcategory`(`uid`) ON UPDATE CASCADE ON DELETE RESTRICT )",
         "fields": [
           {
             "fieldPath": "uid",
@@ -239,6 +239,12 @@
             "columnName": "last_modified",
             "affinity": "TEXT",
             "notNull": false
+          },
+          {
+            "fieldPath": "isShared",
+            "columnName": "is_shared",
+            "affinity": "INTEGER",
+            "notNull": false
           }
         ],
         "primaryKey": {
@@ -266,7 +272,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '58bb6bcd48f41a4aefab2d06888b8490')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'fff13a4a405a1300e2b28b35ab9473db')"
     ]
   }
 }

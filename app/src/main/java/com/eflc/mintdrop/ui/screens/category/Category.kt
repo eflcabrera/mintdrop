@@ -1,4 +1,4 @@
-package com.eflc.mintdrop.ui.category
+package com.eflc.mintdrop.ui.screens.category
 
 import android.annotation.SuppressLint
 import android.net.Uri
@@ -24,7 +24,7 @@ import androidx.navigation.NavController
 import com.eflc.mintdrop.models.ExpenseCategory
 import com.eflc.mintdrop.models.ExpenseSubCategory
 import com.eflc.mintdrop.navigation.AppScreens
-import com.eflc.mintdrop.ui.card.CategoryCard
+import com.eflc.mintdrop.ui.components.card.CategoryCard
 import com.google.gson.Gson
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")

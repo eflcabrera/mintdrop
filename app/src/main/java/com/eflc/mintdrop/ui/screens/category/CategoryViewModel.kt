@@ -1,4 +1,4 @@
-package com.eflc.mintdrop.ui.category
+package com.eflc.mintdrop.ui.screens.category
 
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel

@@ -1,9 +1,11 @@
-package com.eflc.mintdrop.ui.expenseentry
+package com.eflc.mintdrop.ui.screens.expenseentry
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
@@ -30,7 +32,8 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.eflc.mintdrop.models.ExpenseSubCategory
 import com.eflc.mintdrop.room.dao.entity.EntryHistory
-import com.eflc.mintdrop.ui.card.EntryHistoryCard
+import com.eflc.mintdrop.ui.components.LabeledCheckbox
+import com.eflc.mintdrop.ui.components.card.EntryHistoryCard
 import com.eflc.mintdrop.utils.Constants
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -52,18 +55,21 @@ fun ExpenseEntryScreen(
             .fillMaxSize()
             .padding(40.dp)
             .verticalScroll(rememberScrollState()),
-        horizontalAlignment = Alignment.CenterHorizontally,
+        horizontalAlignment = Alignment.Start,
         verticalArrangement = Arrangement.Center
     ) {
         var amountInput by remember { mutableStateOf("") }
         var descriptionInput by remember { mutableStateOf("") }
+        var isSharedExpenseInput by remember { mutableStateOf(false) }
         var expenseSaved by remember { mutableStateOf(false) }
 
         val amount = amountInput.toDoubleOrNull() ?: 0.0
         val description = descriptionInput
+        val isSharedExpense = isSharedExpenseInput
         val expenseEntryResponse by expenseEntryViewModel.expenseEntryResponse.collectAsState()
+        val isExpense = sheet == Constants.EXPENSE_SHEET_NAME
 
-        val saveButtonLabel = if (sheet == Constants.EXPENSE_SHEET_NAME) "gasto" else "ingreso"
+        val saveButtonLabel = if (isExpense) "gasto" else "ingreso"
 
         Text(
             text = expenseSubCategory.name,
@@ -103,19 +109,38 @@ fun ExpenseEntryScreen(
                 .fillMaxWidth()
         )
 
-        Button(
-            onClick = {
-                expenseEntryViewModel.postExpense(amount, description, sheet, expenseSubCategory)
-                amountInput = ""
-                descriptionInput = ""
-                expenseSaved = true
-            },
-            colors = ButtonDefaults.buttonColors(containerColor = Color(160, 221, 230)),
-            enabled = amountInput.isNotBlank() && amountInput.isNotEmpty(),
-            modifier = Modifier.padding(bottom = 40.dp)
-        ) {
-            Text(text = "Guardar $saveButtonLabel", color = Color.Black)
+        if (isExpense) {
+            LabeledCheckbox(
+                label = "Es gasto compartido",
+                isChecked = isSharedExpenseInput,
+                onCheckedChange = { isSharedExpenseInput = it },
+                modifier = Modifier
+                    .clickable { isSharedExpenseInput = !isSharedExpenseInput }
+            )
         }
+
+        Column(
+            modifier = Modifier.fillMaxWidth()
+                .padding(top = 40.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Button(
+                onClick = {
+                    expenseEntryViewModel.postExpense(amount, description, sheet, isSharedExpense, expenseSubCategory)
+                    amountInput = ""
+                    descriptionInput = ""
+                    isSharedExpenseInput = false
+                    expenseSaved = true
+                },
+                colors = ButtonDefaults.buttonColors(containerColor = Color(160, 221, 230)),
+                enabled = amountInput.isNotBlank() && amountInput.isNotEmpty(),
+                modifier = Modifier.padding(bottom = 40.dp).height(50.dp)
+            ) {
+                Text(text = "Guardar $saveButtonLabel", color = Color.Black)
+            }
+        }
+        /*
         if (expenseSaved) {
             Text(
                 text = "Monto anterior: ${expenseEntryResponse.previousAmount}",
@@ -128,6 +153,13 @@ fun ExpenseEntryScreen(
                 modifier = Modifier.padding(bottom = 20.dp)
             )
         }
+        */
+        Text(
+            text = "Últimas entradas",
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(bottom = 32.dp)
+        )
+
         Column(
             modifier = Modifier
                 .fillMaxSize(),

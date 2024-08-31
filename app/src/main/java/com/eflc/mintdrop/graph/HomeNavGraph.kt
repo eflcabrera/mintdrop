@@ -10,10 +10,10 @@ import com.eflc.mintdrop.models.ExpenseCategory
 import com.eflc.mintdrop.models.ExpenseSubCategory
 import com.eflc.mintdrop.navigation.AppScreens
 import com.eflc.mintdrop.navigation.Graphs
-import com.eflc.mintdrop.ui.category.CategoryScreen
-import com.eflc.mintdrop.ui.expense.ExpenseScreen
-import com.eflc.mintdrop.ui.expenseentry.ExpenseEntryScreen
-import com.eflc.mintdrop.ui.income.IncomeScreen
+import com.eflc.mintdrop.ui.screens.category.CategoryScreen
+import com.eflc.mintdrop.ui.screens.expense.ExpenseScreen
+import com.eflc.mintdrop.ui.screens.expenseentry.ExpenseEntryScreen
+import com.eflc.mintdrop.ui.screens.income.IncomeScreen
 
 @Composable
 fun HomeNavigationGraph(navController: NavHostController) {

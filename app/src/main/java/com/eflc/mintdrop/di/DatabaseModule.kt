@@ -27,7 +27,6 @@ object DatabaseModule {
             app,
             JulepDatabase::class.java,
             "julep.db")
-        .fallbackToDestructiveMigration()
         .addMigrations()
         .build()
     }
