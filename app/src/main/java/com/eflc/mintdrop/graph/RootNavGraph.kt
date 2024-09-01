@@ -5,7 +5,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.eflc.mintdrop.navigation.Graphs
-import com.eflc.mintdrop.screens.home.HomeScreen
+import com.eflc.mintdrop.ui.screens.home.HomeScreen
 
 @Composable
 fun RootNavigationGraph(navController: NavHostController) {

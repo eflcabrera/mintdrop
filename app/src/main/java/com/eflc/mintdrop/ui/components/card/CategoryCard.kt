@@ -1,4 +1,4 @@
-package com.eflc.mintdrop.ui.card
+package com.eflc.mintdrop.ui.components.card
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background

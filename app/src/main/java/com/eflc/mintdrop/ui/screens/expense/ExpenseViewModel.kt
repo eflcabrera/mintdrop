@@ -1,4 +1,4 @@
-package com.eflc.mintdrop.ui.expense
+package com.eflc.mintdrop.ui.screens.expense
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope

@@ -1,4 +1,4 @@
-package com.eflc.mintdrop.ui.expense
+package com.eflc.mintdrop.ui.screens.income
 
 import android.annotation.SuppressLint
 import android.net.Uri
@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -26,57 +25,31 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
-import com.eflc.mintdrop.R
 import com.eflc.mintdrop.models.ExpenseCategory
-import com.eflc.mintdrop.models.ExpenseSubCategory
 import com.eflc.mintdrop.navigation.AppScreens
-import com.eflc.mintdrop.ui.card.CategoryCard
-import com.eflc.mintdrop.ui.category.ExpenseSubCategoryCard
+import com.eflc.mintdrop.ui.components.card.CategoryCard
 import com.eflc.mintdrop.utils.Constants
 import com.google.gson.Gson
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ExpenseScreen(navComposable: NavController) {
-    val expenseViewModel: ExpenseViewModel = hiltViewModel()
-    
+fun IncomeScreen(navComposable: NavController) {
+    val incomeViewModel: IncomeViewModel = hiltViewModel()
+
     LaunchedEffect(key1 = true, block = {
-        expenseViewModel.getExpenseCategories()
-        expenseViewModel.getRecentlyUsedSubcategories()
+        incomeViewModel.getIncomeCategories()
     })
-    
-    val categories by expenseViewModel.expenseCategoryList.collectAsState()
-    val lastUsedSubcategories by expenseViewModel.recentlyUsedList.collectAsState()
-    val sheet = Constants.EXPENSE_SHEET_NAME
+
+    val categories by incomeViewModel.incomeCategoryList.collectAsState()
+    val sheet = Constants.INCOME_SHEET_NAME
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         topBar = {
             CenterAlignedTopAppBar(title = { Text(text = sheet) })
-            LazyVerticalGrid(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(260.dp),
-                columns = GridCells.Fixed(3),
-                verticalArrangement = Arrangement.Top,
-                contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 65.dp, bottom = 20.dp)
-            ) {
-                items(lastUsedSubcategories) { subCategory: ExpenseSubCategory ->
-                    ExpenseSubCategoryCard(
-                        modifier = Modifier.height(120.dp),
-                        subCategory = subCategory,
-                        onClick = {
-                            val subcategoryJson = Uri.encode(Gson().toJson(it))
-                            navComposable.navigate(route = AppScreens.ExpenseEntryScreen.route + "/$subcategoryJson/$sheet")
-                        },
-                        fontSize = 12.sp
-                    )
-                }
-            }
         }
     ) {
         Box(
@@ -100,11 +73,10 @@ fun ExpenseScreen(navComposable: NavController) {
                 .fillMaxSize(),
             columns = GridCells.Adaptive(140.dp),
             verticalArrangement = Arrangement.Center,
-            contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 200.dp, bottom = 140.dp)
+            contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 120.dp, bottom = 140.dp)
         ) {
             items(categories) { category: ExpenseCategory ->
                 ExpenseCategoryCard(
-                    modifier = Modifier,
                     category = category,
                     onClick = {
                         val categoryJson = Uri.encode(Gson().toJson(it))
@@ -118,26 +90,9 @@ fun ExpenseScreen(navComposable: NavController) {
 
 @Composable
 fun ExpenseCategoryCard(
-    modifier: Modifier,
     category: ExpenseCategory,
     onClick: (category: ExpenseCategory) -> Unit
 ) {
-    val iconMap = mapOf(
-        "Deuda" to R.drawable.apartment,
-        "Educación" to R.drawable.graduation_hat,
-        "Ocio" to R.drawable.dice,
-        "Gastos diarios" to R.drawable.cart,
-        "Regalos" to R.drawable.gift,
-        "Salud/médicos" to R.drawable.heart_pulse,
-        "Vivienda" to R.drawable.home,
-        "Seguros" to R.drawable.lock,
-        "Mascotas" to R.drawable.paw,
-        "Tecnología" to R.drawable.laptop_phone,
-        "Transporte" to R.drawable.car,
-        "Viajes" to R.drawable.map,
-        "Servicios básicos" to R.drawable.inbox,
-        "Ahorro o Inversión" to R.drawable.star,
-        "Impuestos" to R.drawable.poop
-    )
-    CategoryCard(iconMap = iconMap, category = category, onClick = { onClick(category) }, modifier = modifier)
+    val iconMap = mapOf("none" to 1)
+    CategoryCard(iconMap = iconMap, category = category, onClick = { onClick(category) }, modifier = Modifier)
 }

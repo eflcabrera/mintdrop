@@ -1,4 +1,4 @@
-package com.eflc.mintdrop.screens.home
+package com.eflc.mintdrop.ui.screens.home
 
 import android.annotation.SuppressLint
 import androidx.compose.material.icons.Icons
