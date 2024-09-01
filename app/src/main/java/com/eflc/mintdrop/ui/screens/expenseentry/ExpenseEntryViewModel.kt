@@ -34,8 +34,12 @@ class ExpenseEntryViewModel @Inject constructor(
     private val _entryHistoryList = MutableStateFlow(emptyList<EntryHistory>())
     val entryHistoryList = _entryHistoryList.asStateFlow()
 
+    private val _isSaving = MutableStateFlow(false)
+    val isSaving = _isSaving.asStateFlow()
+
     fun postExpense(amount: Double, description: String, sheet: String, isShared: Boolean, expenseSubCategory: ExpenseSubCategory) {
         coroutineScope.launch {
+            _isSaving.tryEmit(true)
             val subcategory = subcategoryRepository.findSubcategoryByExternalId(expenseSubCategory.id)
             val entryHistory = EntryHistory(
                 subcategoryId = subcategory.uid,
@@ -62,6 +66,7 @@ class ExpenseEntryViewModel @Inject constructor(
             )
             _expenseEntryResponse.tryEmit(expenseEntryResponse).also {
                 getEntryHistory(expenseSubCategory.id)
+                _isSaving.tryEmit(false)
             }
         }
     }
