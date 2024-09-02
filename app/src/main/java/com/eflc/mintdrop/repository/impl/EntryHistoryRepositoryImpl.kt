@@ -16,9 +16,27 @@ class EntryHistoryRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun findEntryHistoryById(entryHistoryId: Long): EntryHistory {
+        return withContext(IO) {
+            dao.getEntryHistory(entryHistoryId)
+        }
+    }
+
     override suspend fun findEntryHistoryBySubcategoryId(subcategoryId: Long): List<EntryHistory> {
         return withContext(IO) {
             dao.getEntryHistoryBySubcategoryIdOrderByDate(subcategoryId)
+        }
+    }
+
+    override suspend fun findLastEntry(): EntryHistory {
+        return withContext(IO) {
+            dao.getTopEntryOrderByDateDesc()
+        }
+    }
+
+    override suspend fun deleteEntryHistory(entryHistory: EntryHistory) {
+        return withContext(IO) {
+            dao.deleteEntryHistory(entryHistory)
         }
     }
 }

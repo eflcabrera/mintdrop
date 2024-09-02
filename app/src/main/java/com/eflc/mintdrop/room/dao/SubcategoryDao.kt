@@ -13,6 +13,9 @@ interface SubcategoryDao {
     @Upsert
     suspend fun saveSubcategory(subcategory: Subcategory): Long
 
+    @Query("SELECT * FROM subcategory WHERE uid = :subcategoryId")
+    suspend fun getSubcategory(subcategoryId: Long): Subcategory
+
     @Transaction
     @Query("SELECT * FROM subcategory WHERE category_id = :categoryId ORDER BY uid ASC")
     fun getSubcategoriesByCategoryId(categoryId: Long): List<SubcategoryAndSubcategoryRow>
