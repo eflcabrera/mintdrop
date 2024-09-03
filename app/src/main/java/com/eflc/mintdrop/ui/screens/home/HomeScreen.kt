@@ -1,6 +1,10 @@
 package com.eflc.mintdrop.ui.screens.home
 
 import android.annotation.SuppressLint
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddCircle
 import androidx.compose.material.icons.filled.Settings
@@ -10,21 +14,33 @@ import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.ShoppingCart
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SmallFloatingActionButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
+import com.eflc.mintdrop.R
 import com.eflc.mintdrop.graph.HomeNavigationGraph
 import com.eflc.mintdrop.navigation.AppScreens
+import com.eflc.mintdrop.ui.components.dialog.UndoEntryDialog
 import com.eflc.mintdrop.utils.Constants
+import java.text.NumberFormat
+import java.util.Locale
 
 data class BottomNavigationItem(
     val title: String,
@@ -37,13 +53,52 @@ data class BottomNavigationItem(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(navController: NavHostController = rememberNavController()) {
+    val homeViewModel: HomeViewModel = hiltViewModel()
     val items = listOf(
         BottomNavigationItem(Constants.SETTINGS_SHEET_NAME, AppScreens.ExpenseScreen.route, Icons.Filled.Settings, Icons.Outlined.Settings),
         BottomNavigationItem(Constants.EXPENSE_SHEET_NAME, AppScreens.ExpenseScreen.route, Icons.Filled.ShoppingCart, Icons.Outlined.ShoppingCart),
         BottomNavigationItem(Constants.INCOME_SHEET_NAME, AppScreens.IncomeScreen.route, Icons.Filled.AddCircle, Icons.Outlined.AddCircle)
     )
 
+    val format: NumberFormat = NumberFormat.getNumberInstance(Locale.GERMAN)
+    format.maximumFractionDigits = 2
+
+    val lastEntry by homeViewModel.lastEntryData.collectAsState()
+
+    val shouldShowUndoDialog = remember { mutableStateOf(false) }
+
+    if (shouldShowUndoDialog.value) {
+        UndoEntryDialog(
+            onDismissRequest = { },
+            onConfirmation = { homeViewModel.deleteEntry() },
+            dialogTitle = "Deshacer último",
+            dialogText = "¿Revertir gasto \"${lastEntry.description}\" en \"${lastEntry.categoryName}\" por $${format.format(lastEntry.amount)}?",
+            isVisible = shouldShowUndoDialog
+        )
+    }
+
     Scaffold(
+        topBar = {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End
+            ) {
+                SmallFloatingActionButton(
+                    onClick = {
+                        homeViewModel.getLastEntry()
+                        shouldShowUndoDialog.value = true
+                    },
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                    contentColor = MaterialTheme.colorScheme.secondary,
+                    modifier = Modifier.padding(8.dp)
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.undo_left_svgrepo_com),
+                        "Undo last entry button"
+                    )
+                }
+            }
+        },
         bottomBar = {
             BottomNavigationBar(
                 items = items,

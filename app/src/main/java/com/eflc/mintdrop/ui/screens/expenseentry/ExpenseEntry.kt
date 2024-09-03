@@ -70,7 +70,6 @@ fun ExpenseEntryScreen(
         val description = descriptionInput
         val isSharedExpense = isSharedExpenseInput
 
-        val expenseEntryResponse by expenseEntryViewModel.expenseEntryResponse.collectAsState()
         val isSaving by expenseEntryViewModel.isSaving.collectAsState()
 
         val isExpense = sheet == Constants.EXPENSE_SHEET_NAME

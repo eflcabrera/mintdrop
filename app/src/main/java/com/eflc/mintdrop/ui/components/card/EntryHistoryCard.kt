@@ -20,6 +20,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -61,7 +62,13 @@ fun EntryHistoryCard(
                 modifier = Modifier
                     .fillMaxHeight(),
             ) {
-                Text(text = description, fontWeight = FontWeight.Bold)
+                Text(
+                    text = description,
+                    fontWeight = FontWeight.Bold,
+                    overflow = TextOverflow.Ellipsis,
+                    maxLines = 1,
+                    modifier = Modifier.width(170.dp)
+                )
                 Text(text = date, fontSize = 12.sp)
             }
             Column(
@@ -70,7 +77,10 @@ fun EntryHistoryCard(
                 modifier = Modifier
                     .fillMaxHeight()
             ) {
-                Text(text = "$ $amount", fontWeight = FontWeight.Bold)
+                Text(
+                    text = "$ $amount",
+                    fontWeight = FontWeight.Bold
+                )
                 Row(
                     horizontalArrangement = Arrangement.End,
                     modifier = Modifier.width(50.dp)
@@ -92,14 +102,14 @@ fun EntryHistoryCard(
 @Preview(showBackground = true)
 @Composable
 fun EntryHistoryCardPreview() {
-    EntryHistoryCard(modifier = Modifier,
+    EntryHistoryCard(modifier = Modifier.width(320.dp),
         entryHistory = EntryHistory(
             subcategoryId = 1L,
             date = LocalDateTime.now(),
-            description = "Prueba de texto",
-            amount = 1200.15,
+            description = "Imp. a los ingresos personales",
+            amount = -91260.15,
             lastModified = LocalDateTime.now(),
-            isShared = true,
+            isShared = false,
         )
     )
 }

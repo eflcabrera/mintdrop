@@ -14,10 +14,21 @@ interface EntryHistoryDao {
     @Delete
     suspend fun deleteEntryHistory(entryHistory: EntryHistory)
 
+    @Query("SELECT * FROM entry_history WHERE uid = :entryHistoryId")
+    suspend fun getEntryHistory(entryHistoryId: Long): EntryHistory
+
     @Query("""
         SELECT * FROM entry_history
         WHERE subcategory_id = :subcategoryId AND date > datetime('now', '-30 days')
         ORDER BY date DESC
     """)
     fun getEntryHistoryBySubcategoryIdOrderByDate(subcategoryId: Long): List<EntryHistory>
+
+    @Query("""
+        SELECT * from entry_history
+        WHERE date > datetime('now', '-30 days')
+        ORDER BY date DESC
+        LIMIT 1
+    """)
+    fun getTopEntryOrderByDateDesc(): EntryHistory
 }

@@ -4,5 +4,8 @@ import com.eflc.mintdrop.room.dao.entity.EntryHistory
 
 interface EntryHistoryRepository {
     suspend fun saveEntryHistory(entryHistory: EntryHistory): Long
+    suspend fun findEntryHistoryById(entryHistoryId: Long): EntryHistory
     suspend fun findEntryHistoryBySubcategoryId(subcategoryId: Long): List<EntryHistory>
+    suspend fun findLastEntry(): EntryHistory
+    suspend fun deleteEntryHistory(entryHistory: EntryHistory)
 }
