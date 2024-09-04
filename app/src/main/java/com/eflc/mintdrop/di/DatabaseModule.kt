@@ -11,6 +11,7 @@ import com.eflc.mintdrop.repository.impl.EntryHistoryRepositoryImpl
 import com.eflc.mintdrop.repository.impl.SubcategoryRepositoryImpl
 import com.eflc.mintdrop.repository.impl.SubcategoryRowRepositoryImpl
 import com.eflc.mintdrop.room.JulepDatabase
+import com.eflc.mintdrop.room.migration.MigrationFrom2To3
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -27,7 +28,9 @@ object DatabaseModule {
             app,
             JulepDatabase::class.java,
             "julep.db")
-        .addMigrations()
+        .addMigrations(
+            MigrationFrom2To3()
+        )
         .build()
     }
 

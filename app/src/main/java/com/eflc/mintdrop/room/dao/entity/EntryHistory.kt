@@ -13,6 +13,13 @@ import java.time.LocalDateTime
         childColumns = ["subcategory_id"],
         onDelete = ForeignKey.RESTRICT,
         onUpdate = ForeignKey.CASCADE
+    ),
+    ForeignKey(
+        entity = PaymentMethod::class,
+        parentColumns = ["uid"],
+        childColumns = ["payment_method_id"],
+        onDelete = ForeignKey.RESTRICT,
+        onUpdate = ForeignKey.CASCADE
     )
 ])
 data class EntryHistory(
@@ -31,5 +38,7 @@ data class EntryHistory(
     @ColumnInfo(name = "last_modified")
     val lastModified: LocalDateTime?,
     @ColumnInfo(name = "is_shared")
-    val isShared: Boolean? = false
+    val isShared: Boolean? = false,
+    @ColumnInfo(name = "payment_method_id")
+    val paymentMethodId: Long? = null,
 )

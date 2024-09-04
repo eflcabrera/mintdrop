@@ -110,6 +110,7 @@ fun EntryHistoryCardPreview() {
             amount = -91260.15,
             lastModified = LocalDateTime.now(),
             isShared = false,
+            paymentMethodId = 1
         )
     )
 }
