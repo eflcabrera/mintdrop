@@ -5,6 +5,7 @@ import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import com.eflc.mintdrop.room.dao.CategoryDao
 import com.eflc.mintdrop.room.dao.EntryHistoryDao
+import com.eflc.mintdrop.room.dao.PaymentMethodDao
 import com.eflc.mintdrop.room.dao.SubcategoryDao
 import com.eflc.mintdrop.room.dao.SubcategoryRowDao
 import com.eflc.mintdrop.room.dao.entity.Category
@@ -29,4 +30,5 @@ abstract class JulepDatabase: RoomDatabase() {
     abstract val subcategoryDao: SubcategoryDao
     abstract val subcategoryRowDao: SubcategoryRowDao
     abstract val entryHistoryDao: EntryHistoryDao
+    abstract val paymentMethodDao: PaymentMethodDao
 }

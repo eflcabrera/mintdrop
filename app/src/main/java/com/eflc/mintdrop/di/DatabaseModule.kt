@@ -4,10 +4,12 @@ import android.app.Application
 import androidx.room.Room
 import com.eflc.mintdrop.repository.CategoryRepository
 import com.eflc.mintdrop.repository.EntryHistoryRepository
+import com.eflc.mintdrop.repository.PaymentMethodRepository
 import com.eflc.mintdrop.repository.SubcategoryRepository
 import com.eflc.mintdrop.repository.SubcategoryRowRepository
 import com.eflc.mintdrop.repository.impl.CategoryRepositoryImpl
 import com.eflc.mintdrop.repository.impl.EntryHistoryRepositoryImpl
+import com.eflc.mintdrop.repository.impl.PaymentMethodRepositoryImpl
 import com.eflc.mintdrop.repository.impl.SubcategoryRepositoryImpl
 import com.eflc.mintdrop.repository.impl.SubcategoryRowRepositoryImpl
 import com.eflc.mintdrop.room.JulepDatabase
@@ -56,5 +58,11 @@ object DatabaseModule {
     @Singleton
     fun provideEntryHistoryRepository(db: JulepDatabase): EntryHistoryRepository {
         return EntryHistoryRepositoryImpl(db.entryHistoryDao)
+    }
+
+    @Provides
+    @Singleton
+    fun providePaymentMethodRepository(db: JulepDatabase): PaymentMethodRepository {
+        return PaymentMethodRepositoryImpl(db.paymentMethodDao)
     }
 }
