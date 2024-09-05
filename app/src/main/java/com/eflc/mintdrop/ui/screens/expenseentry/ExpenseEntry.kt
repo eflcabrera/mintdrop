@@ -35,7 +35,9 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.eflc.mintdrop.models.ExpenseSubCategory
 import com.eflc.mintdrop.room.dao.entity.EntryHistory
+import com.eflc.mintdrop.room.dao.entity.PaymentMethod
 import com.eflc.mintdrop.ui.components.LabeledCheckbox
+import com.eflc.mintdrop.ui.components.PaymentMethodDropdown
 import com.eflc.mintdrop.ui.components.card.EntryHistoryCard
 import com.eflc.mintdrop.utils.Constants
 
@@ -49,9 +51,11 @@ fun ExpenseEntryScreen(
 
     LaunchedEffect(key1 = true, block = {
         expenseEntryViewModel.getEntryHistory(expenseSubCategory.id)
+        expenseEntryViewModel.getPaymentMethods()
     })
 
     val history by expenseEntryViewModel.entryHistoryList.collectAsState()
+    val paymentMethods by expenseEntryViewModel.paymentMethodList.collectAsState()
 
     Column(
         modifier = Modifier
@@ -64,11 +68,13 @@ fun ExpenseEntryScreen(
         var amountInput by remember { mutableStateOf("") }
         var descriptionInput by remember { mutableStateOf("") }
         var isSharedExpenseInput by remember { mutableStateOf(false) }
+        var paymentMethodInput by remember { mutableStateOf<PaymentMethod?>(null) }
         var expenseSaved by remember { mutableStateOf(false) }
 
         val amount = amountInput.toDoubleOrNull() ?: 0.0
         val description = descriptionInput
         val isSharedExpense = isSharedExpenseInput
+        val selectedPaymentMethod = paymentMethodInput
 
         val isSaving by expenseEntryViewModel.isSaving.collectAsState()
 
@@ -115,6 +121,13 @@ fun ExpenseEntryScreen(
         )
 
         if (isExpense) {
+            PaymentMethodDropdown(
+                paymentMethods = paymentMethods,
+                onClick = {
+                    index -> paymentMethodInput = if (index >= 0) paymentMethods[index] else null
+                },
+                selectedValue = selectedPaymentMethod
+            )
             LabeledCheckbox(
                 label = "Es gasto compartido",
                 isChecked = isSharedExpenseInput,
@@ -125,7 +138,8 @@ fun ExpenseEntryScreen(
         }
 
         Column(
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
                 .padding(top = 40.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
@@ -140,7 +154,9 @@ fun ExpenseEntryScreen(
                 },
                 colors = ButtonDefaults.buttonColors(containerColor = Color(160, 221, 230)),
                 enabled = amountInput.isNotBlank() && amountInput.isNotEmpty(),
-                modifier = Modifier.padding(bottom = 40.dp).height(50.dp)
+                modifier = Modifier
+                    .padding(bottom = 40.dp)
+                    .height(50.dp)
             ) {
                 Text(text = "Guardar $saveButtonLabel", color = Color.Black)
             }
@@ -174,7 +190,9 @@ fun ExpenseEntryScreen(
         ) {
             if (isSaving) {
                 CircularProgressIndicator(
-                    modifier = Modifier.width(35.dp).padding(bottom = 14.dp),
+                    modifier = Modifier
+                        .width(35.dp)
+                        .padding(bottom = 14.dp),
                     color = MaterialTheme.colorScheme.secondary
                 )
             }

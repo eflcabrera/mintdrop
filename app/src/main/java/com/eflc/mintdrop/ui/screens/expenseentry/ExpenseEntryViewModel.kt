@@ -7,8 +7,10 @@ import com.eflc.mintdrop.models.ExpenseEntryResponse
 import com.eflc.mintdrop.models.ExpenseSubCategory
 import com.eflc.mintdrop.repository.EntryHistoryRepository
 import com.eflc.mintdrop.repository.GoogleSheetsRepository
+import com.eflc.mintdrop.repository.PaymentMethodRepository
 import com.eflc.mintdrop.repository.SubcategoryRepository
 import com.eflc.mintdrop.room.dao.entity.EntryHistory
+import com.eflc.mintdrop.room.dao.entity.PaymentMethod
 import com.eflc.mintdrop.utils.Constants
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineScope
@@ -26,13 +28,16 @@ class ExpenseEntryViewModel @Inject constructor(
     private val googleSheetsRepository: GoogleSheetsRepository,
     private val coroutineScope: CoroutineScope,
     private val entryHistoryRepository: EntryHistoryRepository,
-    private val subcategoryRepository: SubcategoryRepository
+    private val subcategoryRepository: SubcategoryRepository,
+    private val paymentMethodRepository: PaymentMethodRepository
 ) : ViewModel() {
     private val _expenseEntryResponse = MutableStateFlow(ExpenseEntryResponse("", 0.0, 0.0))
-    val expenseEntryResponse = _expenseEntryResponse.asStateFlow()
 
     private val _entryHistoryList = MutableStateFlow(emptyList<EntryHistory>())
     val entryHistoryList = _entryHistoryList.asStateFlow()
+
+    private val _paymentMethodList = MutableStateFlow(emptyList<PaymentMethod>())
+    val paymentMethodList = _paymentMethodList.asStateFlow()
 
     private val _isSaving = MutableStateFlow(false)
     val isSaving = _isSaving.asStateFlow()
@@ -75,6 +80,13 @@ class ExpenseEntryViewModel @Inject constructor(
         viewModelScope.launch(IO) {
             val subcategory = subcategoryRepository.findSubcategoryByExternalId(subCategoryId)
             _entryHistoryList.tryEmit(entryHistoryRepository.findEntryHistoryBySubcategoryId(subcategory.uid))
+        }
+    }
+
+    fun getPaymentMethods() {
+        viewModelScope.launch(IO) {
+            val paymentMethods = paymentMethodRepository.findAllPaymentMethods()
+            _paymentMethodList.tryEmit(paymentMethods)
         }
     }
 
