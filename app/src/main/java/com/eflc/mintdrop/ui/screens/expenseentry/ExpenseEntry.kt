@@ -146,7 +146,14 @@ fun ExpenseEntryScreen(
         ) {
             Button(
                 onClick = {
-                    expenseEntryViewModel.postExpense(amount, description, sheet, isSharedExpense, expenseSubCategory)
+                    expenseEntryViewModel.postExpense(
+                        amount,
+                        description,
+                        sheet,
+                        isSharedExpense,
+                        expenseSubCategory,
+                        selectedPaymentMethod
+                    )
                     amountInput = ""
                     descriptionInput = ""
                     isSharedExpenseInput = false
@@ -197,7 +204,7 @@ fun ExpenseEntryScreen(
                 )
             }
             history.forEach { entry: EntryHistory ->
-                EntryHistoryCard(Modifier, entry)
+                EntryHistoryCard(Modifier, entry, paymentMethods)
             }
         }
     }

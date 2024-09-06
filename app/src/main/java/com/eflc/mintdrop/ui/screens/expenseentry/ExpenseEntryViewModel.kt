@@ -42,7 +42,13 @@ class ExpenseEntryViewModel @Inject constructor(
     private val _isSaving = MutableStateFlow(false)
     val isSaving = _isSaving.asStateFlow()
 
-    fun postExpense(amount: Double, description: String, sheet: String, isShared: Boolean, expenseSubCategory: ExpenseSubCategory) {
+    fun postExpense(amount: Double,
+                    description: String,
+                    sheet: String,
+                    isShared: Boolean,
+                    expenseSubCategory: ExpenseSubCategory,
+                    paymentMethod: PaymentMethod?
+    ) {
         coroutineScope.launch {
             _isSaving.tryEmit(true)
             val subcategory = subcategoryRepository.findSubcategoryByExternalId(expenseSubCategory.id)
@@ -51,7 +57,8 @@ class ExpenseEntryViewModel @Inject constructor(
                 amount = amount,
                 description = description,
                 lastModified = LocalDateTime.now(),
-                isShared = isShared
+                isShared = isShared,
+                paymentMethodId = paymentMethod?.uid
             )
             entryHistoryRepository.saveEntryHistory(entryHistory)
             subcategory.lastEntryOn = LocalDateTime.now()
@@ -66,7 +73,7 @@ class ExpenseEntryViewModel @Inject constructor(
                     sheet = sheet,
                     isOwedInstallments = false,
                     totalInstallments = 1,
-                    paymentMethod = ""
+                    paymentMethod = paymentMethod?.description ?: ""
                 )
             )
             _expenseEntryResponse.tryEmit(expenseEntryResponse).also {
