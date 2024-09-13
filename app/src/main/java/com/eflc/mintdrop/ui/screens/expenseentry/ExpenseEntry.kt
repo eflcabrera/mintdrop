@@ -14,6 +14,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -40,6 +41,8 @@ import com.eflc.mintdrop.ui.components.LabeledCheckbox
 import com.eflc.mintdrop.ui.components.PaymentMethodDropdown
 import com.eflc.mintdrop.ui.components.card.EntryHistoryCard
 import com.eflc.mintdrop.utils.Constants
+import com.eflc.mintdrop.utils.FormatUtils
+import java.time.LocalDate
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -52,10 +55,12 @@ fun ExpenseEntryScreen(
     LaunchedEffect(key1 = true, block = {
         expenseEntryViewModel.getEntryHistory(expenseSubCategory.id)
         expenseEntryViewModel.getPaymentMethods()
+        expenseEntryViewModel.getMonthlyExpenses(expenseSubCategory.id)
     })
 
     val history by expenseEntryViewModel.entryHistoryList.collectAsState()
     val paymentMethods by expenseEntryViewModel.paymentMethodList.collectAsState()
+    val monthlyExpense by expenseEntryViewModel.monthlyExpense.collectAsState()
 
     Column(
         modifier = Modifier
@@ -86,6 +91,15 @@ fun ExpenseEntryScreen(
             text = expenseSubCategory.name,
             fontWeight = FontWeight.Bold,
             modifier = Modifier.padding(bottom = 32.dp)
+        )
+        Text(
+            text = "Total del mes: $ ${FormatUtils.formatAsCurrency(monthlyExpense)}",
+            fontWeight = FontWeight.Light,
+            modifier = Modifier.padding(bottom = 16.dp)
+        )
+        Divider(
+            thickness = 1.dp,
+            modifier = Modifier.padding(bottom = 16.dp)
         )
 
         TextField(
@@ -182,6 +196,10 @@ fun ExpenseEntryScreen(
             )
         }
         */
+        Divider(
+            thickness = 1.dp,
+            modifier = Modifier.padding(bottom = 16.dp)
+        )
         Text(
             text = "Últimas entradas",
             fontWeight = FontWeight.Bold,
@@ -195,6 +213,7 @@ fun ExpenseEntryScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
         ) {
+            var month = LocalDate.now().monthValue
             if (isSaving) {
                 CircularProgressIndicator(
                     modifier = Modifier
@@ -204,6 +223,13 @@ fun ExpenseEntryScreen(
                 )
             }
             history.forEach { entry: EntryHistory ->
+                if (month != entry.date.month.value) {
+                    month = entry.date.month.value
+                    Divider(
+                        thickness = 1.dp,
+                        modifier = Modifier.padding(bottom = 8.dp, top = 8.dp)
+                    )
+                }
                 EntryHistoryCard(Modifier, entry, paymentMethods)
             }
         }

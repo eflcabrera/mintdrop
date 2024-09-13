@@ -42,6 +42,9 @@ class ExpenseEntryViewModel @Inject constructor(
     private val _isSaving = MutableStateFlow(false)
     val isSaving = _isSaving.asStateFlow()
 
+    private val _monthlyExpense = MutableStateFlow(0.0)
+    val monthlyExpense = _monthlyExpense.asStateFlow()
+
     fun postExpense(amount: Double,
                     description: String,
                     sheet: String,
@@ -78,6 +81,7 @@ class ExpenseEntryViewModel @Inject constructor(
             )
             _expenseEntryResponse.tryEmit(expenseEntryResponse).also {
                 getEntryHistory(expenseSubCategory.id)
+                getMonthlyExpenses(expenseSubCategory.id)
                 _isSaving.tryEmit(false)
             }
         }
@@ -94,6 +98,16 @@ class ExpenseEntryViewModel @Inject constructor(
         viewModelScope.launch(IO) {
             val paymentMethods = paymentMethodRepository.findAllPaymentMethods()
             _paymentMethodList.tryEmit(paymentMethods)
+        }
+    }
+
+    fun getMonthlyExpenses(subCategoryId: String) {
+        viewModelScope.launch(IO) {
+            val subcategory = subcategoryRepository.findSubcategoryByExternalId(subCategoryId)
+            val total = entryHistoryRepository.findEntryHistoryBySubcategoryId(subcategory.uid)
+                .filter { it.date.month.value == LocalDate.now().monthValue }
+                .sumOf { it.amount }
+            _monthlyExpense.tryEmit(total)
         }
     }
 

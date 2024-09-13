@@ -39,8 +39,7 @@ import com.eflc.mintdrop.graph.HomeNavigationGraph
 import com.eflc.mintdrop.navigation.AppScreens
 import com.eflc.mintdrop.ui.components.dialog.UndoEntryDialog
 import com.eflc.mintdrop.utils.Constants
-import java.text.NumberFormat
-import java.util.Locale
+import com.eflc.mintdrop.utils.FormatUtils.Companion.formatAsCurrency
 
 data class BottomNavigationItem(
     val title: String,
@@ -60,9 +59,6 @@ fun HomeScreen(navController: NavHostController = rememberNavController()) {
         BottomNavigationItem(Constants.INCOME_SHEET_NAME, AppScreens.IncomeScreen.route, Icons.Filled.AddCircle, Icons.Outlined.AddCircle)
     )
 
-    val format: NumberFormat = NumberFormat.getNumberInstance(Locale.GERMAN)
-    format.maximumFractionDigits = 2
-
     val lastEntry by homeViewModel.lastEntryData.collectAsState()
 
     val shouldShowUndoDialog = remember { mutableStateOf(false) }
@@ -72,7 +68,7 @@ fun HomeScreen(navController: NavHostController = rememberNavController()) {
             onDismissRequest = { },
             onConfirmation = { homeViewModel.deleteEntry() },
             dialogTitle = "Deshacer último",
-            dialogText = "¿Revertir gasto \"${lastEntry.description}\" en \"${lastEntry.categoryName}\" por $${format.format(lastEntry.amount)}?",
+            dialogText = "¿Revertir gasto \"${lastEntry.description}\" en \"${lastEntry.categoryName}\" por $${formatAsCurrency(lastEntry.amount)}?",
             isVisible = shouldShowUndoDialog
         )
     }

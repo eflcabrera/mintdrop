@@ -28,10 +28,9 @@ import com.eflc.mintdrop.R
 import com.eflc.mintdrop.room.dao.entity.EntryHistory
 import com.eflc.mintdrop.room.dao.entity.PaymentMethod
 import com.eflc.mintdrop.room.dao.entity.PaymentMethodType
-import java.text.NumberFormat
+import com.eflc.mintdrop.utils.FormatUtils.Companion.formatAsCurrency
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-import java.util.Locale
 
 @Composable
 fun EntryHistoryCard(
@@ -39,12 +38,9 @@ fun EntryHistoryCard(
     entryHistory: EntryHistory,
     paymentMethods: List<PaymentMethod>?
 ) {
-    val format: NumberFormat = NumberFormat.getNumberInstance(Locale.GERMAN)
-    format.maximumFractionDigits = 2
-
     val description = entryHistory.description.ifBlank { "???" }
     val date = entryHistory.date.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
-    val amount = format.format(entryHistory.amount)
+    val amount = formatAsCurrency(entryHistory.amount)
     val paymentMethod = paymentMethods?.find { it.uid == entryHistory.paymentMethodId }
 
     return Card(
