@@ -7,8 +7,10 @@ import com.eflc.mintdrop.models.ExpenseEntryResponse
 import com.eflc.mintdrop.models.ExpenseSubCategory
 import com.eflc.mintdrop.repository.EntryHistoryRepository
 import com.eflc.mintdrop.repository.GoogleSheetsRepository
+import com.eflc.mintdrop.repository.PaymentMethodRepository
 import com.eflc.mintdrop.repository.SubcategoryRepository
 import com.eflc.mintdrop.room.dao.entity.EntryHistory
+import com.eflc.mintdrop.room.dao.entity.PaymentMethod
 import com.eflc.mintdrop.utils.Constants
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineScope
@@ -26,18 +28,30 @@ class ExpenseEntryViewModel @Inject constructor(
     private val googleSheetsRepository: GoogleSheetsRepository,
     private val coroutineScope: CoroutineScope,
     private val entryHistoryRepository: EntryHistoryRepository,
-    private val subcategoryRepository: SubcategoryRepository
+    private val subcategoryRepository: SubcategoryRepository,
+    private val paymentMethodRepository: PaymentMethodRepository
 ) : ViewModel() {
     private val _expenseEntryResponse = MutableStateFlow(ExpenseEntryResponse("", 0.0, 0.0))
-    val expenseEntryResponse = _expenseEntryResponse.asStateFlow()
 
     private val _entryHistoryList = MutableStateFlow(emptyList<EntryHistory>())
     val entryHistoryList = _entryHistoryList.asStateFlow()
 
+    private val _paymentMethodList = MutableStateFlow(emptyList<PaymentMethod>())
+    val paymentMethodList = _paymentMethodList.asStateFlow()
+
     private val _isSaving = MutableStateFlow(false)
     val isSaving = _isSaving.asStateFlow()
 
-    fun postExpense(amount: Double, description: String, sheet: String, isShared: Boolean, expenseSubCategory: ExpenseSubCategory) {
+    private val _monthlyExpense = MutableStateFlow(0.0)
+    val monthlyExpense = _monthlyExpense.asStateFlow()
+
+    fun postExpense(amount: Double,
+                    description: String,
+                    sheet: String,
+                    isShared: Boolean,
+                    expenseSubCategory: ExpenseSubCategory,
+                    paymentMethod: PaymentMethod?
+    ) {
         coroutineScope.launch {
             _isSaving.tryEmit(true)
             val subcategory = subcategoryRepository.findSubcategoryByExternalId(expenseSubCategory.id)
@@ -46,7 +60,8 @@ class ExpenseEntryViewModel @Inject constructor(
                 amount = amount,
                 description = description,
                 lastModified = LocalDateTime.now(),
-                isShared = isShared
+                isShared = isShared,
+                paymentMethodId = paymentMethod?.uid
             )
             entryHistoryRepository.saveEntryHistory(entryHistory)
             subcategory.lastEntryOn = LocalDateTime.now()
@@ -61,11 +76,12 @@ class ExpenseEntryViewModel @Inject constructor(
                     sheet = sheet,
                     isOwedInstallments = false,
                     totalInstallments = 1,
-                    paymentMethod = ""
+                    paymentMethod = paymentMethod?.description ?: ""
                 )
             )
             _expenseEntryResponse.tryEmit(expenseEntryResponse).also {
                 getEntryHistory(expenseSubCategory.id)
+                getMonthlyExpenses(expenseSubCategory.id)
                 _isSaving.tryEmit(false)
             }
         }
@@ -75,6 +91,23 @@ class ExpenseEntryViewModel @Inject constructor(
         viewModelScope.launch(IO) {
             val subcategory = subcategoryRepository.findSubcategoryByExternalId(subCategoryId)
             _entryHistoryList.tryEmit(entryHistoryRepository.findEntryHistoryBySubcategoryId(subcategory.uid))
+        }
+    }
+
+    fun getPaymentMethods() {
+        viewModelScope.launch(IO) {
+            val paymentMethods = paymentMethodRepository.findAllPaymentMethods()
+            _paymentMethodList.tryEmit(paymentMethods)
+        }
+    }
+
+    fun getMonthlyExpenses(subCategoryId: String) {
+        viewModelScope.launch(IO) {
+            val subcategory = subcategoryRepository.findSubcategoryByExternalId(subCategoryId)
+            val total = entryHistoryRepository.findEntryHistoryBySubcategoryId(subcategory.uid)
+                .filter { it.date.month.value == LocalDate.now().monthValue }
+                .sumOf { it.amount }
+            _monthlyExpense.tryEmit(total)
         }
     }
 

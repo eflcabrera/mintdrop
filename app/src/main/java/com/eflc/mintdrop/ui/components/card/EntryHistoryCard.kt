@@ -26,22 +26,22 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.eflc.mintdrop.R
 import com.eflc.mintdrop.room.dao.entity.EntryHistory
-import java.text.NumberFormat
+import com.eflc.mintdrop.room.dao.entity.PaymentMethod
+import com.eflc.mintdrop.room.dao.entity.PaymentMethodType
+import com.eflc.mintdrop.utils.FormatUtils.Companion.formatAsCurrency
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-import java.util.Locale
 
 @Composable
 fun EntryHistoryCard(
     modifier: Modifier,
-    entryHistory: EntryHistory
+    entryHistory: EntryHistory,
+    paymentMethods: List<PaymentMethod>?
 ) {
-    val format: NumberFormat = NumberFormat.getNumberInstance(Locale.GERMAN)
-    format.maximumFractionDigits = 2
-
     val description = entryHistory.description.ifBlank { "???" }
     val date = entryHistory.date.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
-    val amount = format.format(entryHistory.amount)
+    val amount = formatAsCurrency(entryHistory.amount)
+    val paymentMethod = paymentMethods?.find { it.uid == entryHistory.paymentMethodId }
 
     return Card(
         shape = MaterialTheme.shapes.extraSmall,
@@ -85,11 +85,19 @@ fun EntryHistoryCard(
                     horizontalArrangement = Arrangement.End,
                     modifier = Modifier.width(50.dp)
                 ) {
+                    if (paymentMethod?.type == PaymentMethodType.CREDIT_CARD) {
+                        Image(
+                            painter = painterResource(id = R.drawable.card_svgrepo_com),
+                            colorFilter = ColorFilter.tint(color = Color(66, 135, 245)),
+                            contentDescription = "credit card payment icon",
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
                     if (entryHistory.isShared == true) {
                         Image(
                             painter = painterResource(id = R.drawable.hearts_svgrepo_com),
-                            colorFilter = ColorFilter.tint(color = Color.Gray),
-                            contentDescription = "android image",
+                            colorFilter = ColorFilter.tint(color = Color(54, 180, 103)),
+                            contentDescription = "shared expense icon",
                             modifier = Modifier.size(20.dp)
                         )
                     }
@@ -109,7 +117,9 @@ fun EntryHistoryCardPreview() {
             description = "Imp. a los ingresos personales",
             amount = -91260.15,
             lastModified = LocalDateTime.now(),
-            isShared = false,
-        )
+            isShared = true,
+            paymentMethodId = 1
+        ),
+        paymentMethods = listOf(PaymentMethod(1, "Crédito", PaymentMethodType.CREDIT_CARD))
     )
 }
