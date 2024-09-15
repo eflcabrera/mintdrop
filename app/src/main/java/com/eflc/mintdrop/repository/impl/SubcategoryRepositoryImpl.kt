@@ -1,5 +1,6 @@
 package com.eflc.mintdrop.repository.impl
 
+import com.eflc.mintdrop.models.EntryType
 import com.eflc.mintdrop.repository.SubcategoryRepository
 import com.eflc.mintdrop.room.dao.SubcategoryDao
 import com.eflc.mintdrop.room.dao.entity.Subcategory
@@ -36,9 +37,9 @@ class SubcategoryRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun findSubcategoryByExternalId(externalId: String): Subcategory {
+    override suspend fun findSubcategoryByExternalIdAndCategoryType(categoryType: EntryType,externalId: String): Subcategory {
         return withContext(IO) {
-            dao.getSubcategoryByExternalId(externalId)
+            dao.getSubcategoryByExternalIdAndCategoryType(categoryType, externalId)
         }
     }
 
