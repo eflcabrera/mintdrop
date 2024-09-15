@@ -34,6 +34,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.eflc.mintdrop.models.EntryType
 import com.eflc.mintdrop.models.ExpenseSubCategory
 import com.eflc.mintdrop.room.dao.entity.EntryHistory
 import com.eflc.mintdrop.room.dao.entity.PaymentMethod
@@ -51,11 +52,13 @@ fun ExpenseEntryScreen(
     sheet: String
 ) {
     val expenseEntryViewModel: ExpenseEntryViewModel = hiltViewModel()
+    val isExpense = sheet == Constants.EXPENSE_SHEET_NAME
+    val categoryType = if (isExpense) EntryType.EXPENSE else EntryType.INCOME
 
     LaunchedEffect(key1 = true, block = {
-        expenseEntryViewModel.getEntryHistory(expenseSubCategory.id)
+        expenseEntryViewModel.getEntryHistory(categoryType, expenseSubCategory.id)
         expenseEntryViewModel.getPaymentMethods()
-        expenseEntryViewModel.getMonthlyExpenses(expenseSubCategory.id)
+        expenseEntryViewModel.getMonthlyExpenses(categoryType, expenseSubCategory.id)
     })
 
     val history by expenseEntryViewModel.entryHistoryList.collectAsState()
@@ -82,8 +85,6 @@ fun ExpenseEntryScreen(
         val selectedPaymentMethod = paymentMethodInput
 
         val isSaving by expenseEntryViewModel.isSaving.collectAsState()
-
-        val isExpense = sheet == Constants.EXPENSE_SHEET_NAME
 
         val saveButtonLabel = if (isExpense) "gasto" else "ingreso"
 

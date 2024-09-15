@@ -2,6 +2,7 @@ package com.eflc.mintdrop.ui.screens.expenseentry
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.eflc.mintdrop.models.EntryType
 import com.eflc.mintdrop.models.ExpenseEntryRequest
 import com.eflc.mintdrop.models.ExpenseEntryResponse
 import com.eflc.mintdrop.models.ExpenseSubCategory
@@ -54,7 +55,9 @@ class ExpenseEntryViewModel @Inject constructor(
     ) {
         coroutineScope.launch {
             _isSaving.tryEmit(true)
-            val subcategory = subcategoryRepository.findSubcategoryByExternalId(expenseSubCategory.id)
+            val categoryType = if (sheet == Constants.EXPENSE_SHEET_NAME) EntryType.EXPENSE else EntryType.INCOME
+
+            val subcategory = subcategoryRepository.findSubcategoryByExternalIdAndCategoryType(categoryType, expenseSubCategory.id)
             val entryHistory = EntryHistory(
                 subcategoryId = subcategory.uid,
                 amount = amount,
@@ -80,16 +83,16 @@ class ExpenseEntryViewModel @Inject constructor(
                 )
             )
             _expenseEntryResponse.tryEmit(expenseEntryResponse).also {
-                getEntryHistory(expenseSubCategory.id)
-                getMonthlyExpenses(expenseSubCategory.id)
+                getEntryHistory(categoryType, expenseSubCategory.id)
+                getMonthlyExpenses(categoryType, expenseSubCategory.id)
                 _isSaving.tryEmit(false)
             }
         }
     }
 
-    fun getEntryHistory(subCategoryId: String) {
+    fun getEntryHistory(categoryType: EntryType, subCategoryId: String) {
         viewModelScope.launch(IO) {
-            val subcategory = subcategoryRepository.findSubcategoryByExternalId(subCategoryId)
+            val subcategory = subcategoryRepository.findSubcategoryByExternalIdAndCategoryType(categoryType, subCategoryId)
             _entryHistoryList.tryEmit(entryHistoryRepository.findEntryHistoryBySubcategoryId(subcategory.uid))
         }
     }
@@ -101,9 +104,9 @@ class ExpenseEntryViewModel @Inject constructor(
         }
     }
 
-    fun getMonthlyExpenses(subCategoryId: String) {
+    fun getMonthlyExpenses(categoryType: EntryType, subCategoryId: String) {
         viewModelScope.launch(IO) {
-            val subcategory = subcategoryRepository.findSubcategoryByExternalId(subCategoryId)
+            val subcategory = subcategoryRepository.findSubcategoryByExternalIdAndCategoryType(categoryType, subCategoryId)
             val total = entryHistoryRepository.findEntryHistoryBySubcategoryId(subcategory.uid)
                 .filter { it.date.month.value == LocalDate.now().monthValue }
                 .sumOf { it.amount }
