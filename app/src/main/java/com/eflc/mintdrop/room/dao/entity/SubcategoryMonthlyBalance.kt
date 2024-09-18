@@ -28,7 +28,7 @@ data class SubcategoryMonthlyBalance(
     @ColumnInfo(name = "year")
     val year: Int,
     @ColumnInfo(name = "balance")
-    val balance: Double,
+    var balance: Double,
     @ColumnInfo(name = "last_modified")
     var lastModified: LocalDateTime? = null,
 )

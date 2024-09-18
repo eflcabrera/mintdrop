@@ -6,4 +6,8 @@ interface SubcategoryMonthlyBalanceRepository {
     suspend fun saveSubcategoryMonthlyBalance(
         subcategoryMonthlyBalance: SubcategoryMonthlyBalance
     ): Long
+
+    suspend fun findBalanceBySubcategoryIdAndPeriod(
+        subcategoryId: Long, year: Int, month: Int
+    ): SubcategoryMonthlyBalance?
 }
