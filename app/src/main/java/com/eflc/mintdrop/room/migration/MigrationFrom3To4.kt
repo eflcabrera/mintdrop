@@ -6,7 +6,16 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 class MigrationFrom3To4 : Migration(3, 4) {
     override fun migrate(db: SupportSQLiteDatabase) {
         db.execSQL("""
-            
+            CREATE TABLE IF NOT EXISTS subcategory_monthly_balance (
+                `uid` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                `subcategory_id` INTEGER NOT NULL,
+                `month` INTEGER NOT NULL,
+                `year` INTEGER NOT NULL,
+                `balance` REAL NOT NULL,
+                `last_modified` TEXT,
+                FOREIGN KEY(`subcategory_id`) REFERENCES `subcategory`(`uid`) ON UPDATE CASCADE ON DELETE RESTRICT,
+                UNIQUE(`subcategory_id`,`year`,`month`)
+            )
         """.trimIndent())
     }
 }
