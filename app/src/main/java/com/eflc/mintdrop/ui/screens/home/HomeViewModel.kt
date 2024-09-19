@@ -8,6 +8,7 @@ import com.eflc.mintdrop.models.ExpenseEntryRequest
 import com.eflc.mintdrop.repository.CategoryRepository
 import com.eflc.mintdrop.repository.EntryHistoryRepository
 import com.eflc.mintdrop.repository.GoogleSheetsRepository
+import com.eflc.mintdrop.repository.SubcategoryMonthlyBalanceRepository
 import com.eflc.mintdrop.repository.SubcategoryRepository
 import com.eflc.mintdrop.repository.SubcategoryRowRepository
 import com.eflc.mintdrop.utils.Constants
@@ -25,7 +26,8 @@ class HomeViewModel @Inject constructor(
     private val subcategoryRepository: SubcategoryRepository,
     private val subcategoryRowRepository: SubcategoryRowRepository,
     private val entryHistoryRepository: EntryHistoryRepository,
-    private val categoryRepository: CategoryRepository
+    private val categoryRepository: CategoryRepository,
+    private val subcategoryMonthlyBalanceRepository: SubcategoryMonthlyBalanceRepository
 ) : ViewModel() {
     private val _lastEntryData = MutableStateFlow(EntryData(0, "", "", 0.0))
     val lastEntryData = _lastEntryData.asStateFlow()
@@ -54,6 +56,15 @@ class HomeViewModel @Inject constructor(
                         run {
                             entryHistoryRepository.deleteEntryHistory(entryHistory)
                             val subcategory = subcategoryRepository.findSubcategoryById(entryHistory.subcategoryId)
+                            val currentBalance = subcategoryMonthlyBalanceRepository.findBalanceBySubcategoryIdAndPeriod(
+                                subcategory.uid, entryHistory.date.year, entryHistory.date.monthValue
+                            )
+
+                            if (currentBalance != null) {
+                                currentBalance.balance = currentBalance.balance.minus(entryHistory.amount)
+                                subcategoryMonthlyBalanceRepository.saveSubcategoryMonthlyBalance(currentBalance)
+                            }
+
                             val row = subcategoryRowRepository.findRowBySubcategoryId(subcategory.uid)
                             val c = categoryRepository.findCategoryById(subcategory.categoryId)
                             googleSheetsRepository.postExpense(
