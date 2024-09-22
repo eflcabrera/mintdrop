@@ -5,5 +5,6 @@ import com.eflc.mintdrop.room.dao.entity.EntryHistory
 import com.eflc.mintdrop.room.dao.entity.PaymentMethod
 
 interface EntryRecordService {
-    suspend fun recordEntry(entryRecord: EntryHistory, sheetName: String, paymentMethod: PaymentMethod?): ExpenseEntryResponse?
+    suspend fun createRecord(entryRecord: EntryHistory, sheetName: String, paymentMethod: PaymentMethod?): ExpenseEntryResponse?
+    suspend fun deleteRecord(entryRecord: EntryHistory)
 }

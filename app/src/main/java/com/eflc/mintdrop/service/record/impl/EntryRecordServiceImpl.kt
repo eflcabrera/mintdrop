@@ -4,6 +4,7 @@ import androidx.room.withTransaction
 import com.eflc.mintdrop.models.EntryType
 import com.eflc.mintdrop.models.ExpenseEntryRequest
 import com.eflc.mintdrop.models.ExpenseEntryResponse
+import com.eflc.mintdrop.repository.CategoryRepository
 import com.eflc.mintdrop.repository.EntryHistoryRepository
 import com.eflc.mintdrop.repository.GoogleSheetsRepository
 import com.eflc.mintdrop.repository.SubcategoryMonthlyBalanceRepository
@@ -13,7 +14,6 @@ import com.eflc.mintdrop.room.JulepDatabase
 import com.eflc.mintdrop.room.dao.entity.EntryHistory
 import com.eflc.mintdrop.room.dao.entity.PaymentMethod
 import com.eflc.mintdrop.room.dao.entity.SubcategoryMonthlyBalance
-import com.eflc.mintdrop.room.dao.entity.SubcategoryRow
 import com.eflc.mintdrop.service.record.EntryRecordService
 import com.eflc.mintdrop.utils.Constants
 import java.time.LocalDate
@@ -24,11 +24,12 @@ class EntryRecordServiceImpl @Inject constructor(
     private val db: JulepDatabase,
     private val entryHistoryRepository: EntryHistoryRepository,
     private val subcategoryRepository: SubcategoryRepository,
+    private val categoryRepository: CategoryRepository,
     private val subcategoryRowRepository: SubcategoryRowRepository,
     private val subcategoryMonthlyBalanceRepository: SubcategoryMonthlyBalanceRepository,
     private val googleSheetsRepository: GoogleSheetsRepository
 ) : EntryRecordService {
-    override suspend fun recordEntry(entryRecord: EntryHistory, sheetName: String, paymentMethod: PaymentMethod?): ExpenseEntryResponse? {
+    override suspend fun createRecord(entryRecord: EntryHistory, sheetName: String, paymentMethod: PaymentMethod?): ExpenseEntryResponse? {
         var expenseEntryResponse: ExpenseEntryResponse? = null
         db.withTransaction {
             entryHistoryRepository.saveEntryHistory(entryRecord)
@@ -71,6 +72,33 @@ class EntryRecordServiceImpl @Inject constructor(
         }
 
         return expenseEntryResponse
+    }
+
+    override suspend fun deleteRecord(entryRecord: EntryHistory) {
+        entryHistoryRepository.deleteEntryHistory(entryRecord)
+        val subcategory = subcategoryRepository.findSubcategoryById(entryRecord.subcategoryId)
+        val currentBalance = subcategoryMonthlyBalanceRepository.findBalanceBySubcategoryIdAndPeriod(
+            subcategory.uid, entryRecord.date.year, entryRecord.date.monthValue
+        )
+
+        if (currentBalance != null) {
+            currentBalance.balance = currentBalance.balance.minus(entryRecord.amount)
+            subcategoryMonthlyBalanceRepository.saveSubcategoryMonthlyBalance(currentBalance)
+        }
+
+        val row = subcategoryRowRepository.findRowBySubcategoryId(subcategory.uid)
+        val cat = categoryRepository.findCategoryById(subcategory.categoryId)
+        googleSheetsRepository.postExpense(
+            buildExpenseEntryRequest(
+                row = row.rowNumber,
+                amount = -1 * entryRecord.amount,
+                description = "UNDO ${entryRecord.description}",
+                sheet = if (cat.category.type == EntryType.EXPENSE) Constants.EXPENSE_SHEET_NAME else Constants.INCOME_SHEET_NAME,
+                isOwedInstallments = false,
+                totalInstallments = 1,
+                paymentMethod = ""
+            )
+        )
     }
 
     private fun buildExpenseEntryRequest(

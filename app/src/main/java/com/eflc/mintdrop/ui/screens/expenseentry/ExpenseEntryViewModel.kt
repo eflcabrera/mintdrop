@@ -71,7 +71,7 @@ class ExpenseEntryViewModel @Inject constructor(
                 paymentMethodId = paymentMethod?.uid
             )
 
-            val expenseEntryResponse : ExpenseEntryResponse = entryRecordService.recordEntry(entryHistory, sheet, paymentMethod)!!
+            val expenseEntryResponse : ExpenseEntryResponse = entryRecordService.createRecord(entryHistory, sheet, paymentMethod)!!
 
             _expenseEntryResponse.tryEmit(expenseEntryResponse).also {
                 getEntryHistory(categoryType, expenseSubCategory.id)
