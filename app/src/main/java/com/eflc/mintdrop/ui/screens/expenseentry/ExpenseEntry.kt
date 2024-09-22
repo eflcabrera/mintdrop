@@ -168,7 +168,6 @@ fun ExpenseEntryScreen(
                         isSharedExpense,
                         expenseSubCategory,
                         selectedPaymentMethod,
-                        monthlyBalance
                     )
                     amountInput = ""
                     descriptionInput = ""
