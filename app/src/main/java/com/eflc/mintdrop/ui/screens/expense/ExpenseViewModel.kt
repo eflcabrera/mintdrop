@@ -7,10 +7,12 @@ import com.eflc.mintdrop.models.ExpenseCategory
 import com.eflc.mintdrop.models.ExpenseSubCategory
 import com.eflc.mintdrop.repository.CategoryRepository
 import com.eflc.mintdrop.repository.GoogleSheetsRepository
+import com.eflc.mintdrop.repository.SubcategoryMonthlyBalanceRepository
 import com.eflc.mintdrop.repository.SubcategoryRepository
 import com.eflc.mintdrop.repository.SubcategoryRowRepository
 import com.eflc.mintdrop.room.dao.entity.Category
 import com.eflc.mintdrop.room.dao.entity.Subcategory
+import com.eflc.mintdrop.room.dao.entity.SubcategoryMonthlyBalance
 import com.eflc.mintdrop.room.dao.entity.SubcategoryRow
 import com.eflc.mintdrop.room.dao.entity.relationship.CategoryAndSubcategory
 import com.eflc.mintdrop.room.dao.entity.relationship.SubcategoryAndSubcategoryRow
@@ -21,6 +23,7 @@ import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import java.time.LocalDate
 import java.time.LocalDateTime
 import javax.inject.Inject
 
@@ -30,12 +33,16 @@ class ExpenseViewModel @Inject constructor(
     private val categoryRepository: CategoryRepository,
     private val subcategoryRepository: SubcategoryRepository,
     private val subcategoryRowRepository: SubcategoryRowRepository,
+    private val subcategoryMonthlyBalanceRepository: SubcategoryMonthlyBalanceRepository,
 ) : ViewModel() {
     private val _expenseCategoryList = MutableStateFlow(emptyList<ExpenseCategory>())
     val expenseCategoryList = _expenseCategoryList.asStateFlow()
 
     private val _recentlyUsedList = MutableStateFlow(emptyList<ExpenseSubCategory>())
     val recentlyUsedList = _recentlyUsedList.asStateFlow()
+
+    private val _monthlyBalance = MutableStateFlow(0.0)
+    val monthlyBalance = _monthlyBalance.asStateFlow()
 
     fun syncExpenseCategories() {
         viewModelScope.launch(IO) {
@@ -135,6 +142,21 @@ class ExpenseViewModel @Inject constructor(
                 ExpenseSubCategory(id = it.subcategory.externalId, name = it.subcategory.name, rowNumber = it.subcategoryRow.rowNumber)
             }
             _recentlyUsedList.tryEmit(expSubCategoryList)
+        }
+    }
+
+    fun getMonthlyBalance() {
+        viewModelScope.launch(IO) {
+            val currentMonth = LocalDate.now().monthValue
+            val currentYear = LocalDate.now().year
+            val totalMonthlyBalance = categoryRepository.findCategoriesByType(EntryType.EXPENSE).map {
+                category -> subcategoryMonthlyBalanceRepository.findCategoryMonthlyBalanceByCategoryIdAndPeriod(
+                    category.category.uid,
+                    currentYear,
+                    currentMonth
+                ).sumOf { it.balance }
+            }.sumOf { it }
+            _monthlyBalance.tryEmit(totalMonthlyBalance)
         }
     }
 }
