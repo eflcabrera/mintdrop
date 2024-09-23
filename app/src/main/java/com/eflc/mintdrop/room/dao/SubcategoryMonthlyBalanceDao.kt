@@ -2,6 +2,7 @@ package com.eflc.mintdrop.room.dao
 
 import androidx.room.Dao
 import androidx.room.Query
+import androidx.room.Transaction
 import androidx.room.Upsert
 import com.eflc.mintdrop.room.dao.entity.SubcategoryMonthlyBalance
 
@@ -23,4 +24,19 @@ interface SubcategoryMonthlyBalanceDao {
         year: Int,
         month: Int
     ): SubcategoryMonthlyBalance?
+
+    @Query("""
+        SELECT smb.* FROM subcategory_monthly_balance smb
+        INNER JOIN subcategory sc ON sc.uid = smb.subcategory_id
+        INNER JOIN category c ON c.uid = sc.category_id
+        WHERE c.uid = :categoryId
+        AND year = :year
+        AND month = :month
+    """)
+    @Transaction
+    suspend fun getMonthlyBalancesByCategoryIdAndPeriod(
+        categoryId: Long,
+        year: Int,
+        month: Int
+    ): List<SubcategoryMonthlyBalance>
 }

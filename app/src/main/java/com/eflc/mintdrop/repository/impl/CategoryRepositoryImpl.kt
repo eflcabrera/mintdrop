@@ -25,4 +25,8 @@ class CategoryRepositoryImpl @Inject constructor(
     override suspend fun findCategoriesByType(entryType: EntryType): List<CategoryAndSubcategory> {
         return dao.getCategoriesByType(entryType)
     }
+
+    override suspend fun findCategoryByExternalIdAndEntryType(externalId: String, entryType: EntryType): Category {
+        return dao.getCategoryByExternalIdAndEntryType(externalId, entryType)
+    }
 }

@@ -2,6 +2,7 @@ package com.eflc.mintdrop.ui.screens.expense
 
 import android.annotation.SuppressLint
 import android.net.Uri
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -17,6 +18,7 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -56,25 +58,34 @@ fun ExpenseScreen(navComposable: NavController) {
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         topBar = {
-            CenterAlignedTopAppBar(title = { Text(text = sheet) })
-            LazyVerticalGrid(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(260.dp),
-                columns = GridCells.Fixed(3),
-                verticalArrangement = Arrangement.Top,
-                contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 65.dp, bottom = 20.dp)
+            Box(modifier = Modifier
+                .fillMaxWidth()
+                .background(MaterialTheme.colorScheme.background)
             ) {
-                items(lastUsedSubcategories) { subCategory: ExpenseSubCategory ->
-                    ExpenseSubCategoryCard(
-                        modifier = Modifier.height(120.dp),
-                        subCategory = subCategory,
-                        onClick = {
-                            val subcategoryJson = Uri.encode(Gson().toJson(it))
-                            navComposable.navigate(route = AppScreens.ExpenseEntryScreen.route + "/$subcategoryJson/$sheet")
-                        },
-                        fontSize = 12.sp
+                CenterAlignedTopAppBar(title = { Text(text = sheet) })
+                LazyVerticalGrid(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(200.dp),
+                    columns = GridCells.Fixed(3),
+                    verticalArrangement = Arrangement.Top,
+                    contentPadding = PaddingValues(
+                        start = 20.dp,
+                        end = 20.dp,
+                        top = 65.dp
                     )
+                ) {
+                    items(lastUsedSubcategories) { subCategory: ExpenseSubCategory ->
+                        ExpenseSubCategoryCard(
+                            modifier = Modifier.height(120.dp),
+                            subCategory = subCategory,
+                            onClick = {
+                                val subcategoryJson = Uri.encode(Gson().toJson(it))
+                                navComposable.navigate(route = AppScreens.ExpenseEntryScreen.route + "/$subcategoryJson/$sheet")
+                            },
+                            fontSize = 12.sp
+                        )
+                    }
                 }
             }
         }

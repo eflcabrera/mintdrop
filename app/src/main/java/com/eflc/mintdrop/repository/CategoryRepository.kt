@@ -9,4 +9,5 @@ interface CategoryRepository {
     suspend fun findAllCategories(): List<CategoryAndSubcategory>
     suspend fun findCategoryById(id: Long): CategoryAndSubcategory
     suspend fun findCategoriesByType(entryType: EntryType): List<CategoryAndSubcategory>
+    suspend fun findCategoryByExternalIdAndEntryType(externalId: String, entryType: EntryType): Category
 }

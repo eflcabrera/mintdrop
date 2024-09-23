@@ -24,4 +24,7 @@ interface CategoryDao {
     @Transaction
     @Query("SELECT * FROM category WHERE type = :type")
     fun getCategoriesByType(type: EntryType): List<CategoryAndSubcategory>
+
+    @Query("SELECT * FROM category WHERE external_id = :externalId AND type = :entryType")
+    fun getCategoryByExternalIdAndEntryType(externalId: String, entryType: EntryType): Category
 }

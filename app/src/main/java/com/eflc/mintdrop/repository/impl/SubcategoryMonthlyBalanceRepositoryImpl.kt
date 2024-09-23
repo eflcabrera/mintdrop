@@ -19,4 +19,12 @@ class SubcategoryMonthlyBalanceRepositoryImpl @Inject constructor(
     ): SubcategoryMonthlyBalance? {
         return dao.findBalanceBySubcategoryIdAndPeriod(subcategoryId, year, month)
     }
+
+    override suspend fun findCategoryMonthlyBalanceByCategoryIdAndPeriod(
+        categoryId: Long,
+        year: Int,
+        month: Int
+    ): List<SubcategoryMonthlyBalance> {
+        return dao.getMonthlyBalancesByCategoryIdAndPeriod(categoryId, year, month)
+    }
 }
