@@ -61,6 +61,7 @@ dependencies {
     val viewModelVersion = "2.6.2"
     val retrofitVersion = "2.9.0"
     val roomVersion = "2.6.0"
+    val ychartsVersion = "2.1.0"
 
     implementation("androidx.core:core-ktx:1.9.0")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:$viewModelVersion")
@@ -86,6 +87,7 @@ dependencies {
     implementation("androidx.room:room-ktx:$roomVersion")
     implementation("androidx.room:room-runtime:$roomVersion")
     implementation("androidx.room:room-paging:$roomVersion")
+    implementation("co.yml:ycharts:2.1.0")
     annotationProcessor("androidx.room:room-compiler:$roomVersion")
     ksp("com.squareup.moshi:moshi-kotlin-codegen:1.15.0")
     ksp("com.google.dagger:hilt-android-compiler:2.48.1")
