@@ -7,11 +7,13 @@ import com.eflc.mintdrop.room.dao.CategoryDao
 import com.eflc.mintdrop.room.dao.EntryHistoryDao
 import com.eflc.mintdrop.room.dao.PaymentMethodDao
 import com.eflc.mintdrop.room.dao.SubcategoryDao
+import com.eflc.mintdrop.room.dao.SubcategoryMonthlyBalanceDao
 import com.eflc.mintdrop.room.dao.SubcategoryRowDao
 import com.eflc.mintdrop.room.dao.entity.Category
 import com.eflc.mintdrop.room.dao.entity.EntryHistory
 import com.eflc.mintdrop.room.dao.entity.PaymentMethod
 import com.eflc.mintdrop.room.dao.entity.Subcategory
+import com.eflc.mintdrop.room.dao.entity.SubcategoryMonthlyBalance
 import com.eflc.mintdrop.room.dao.entity.SubcategoryRow
 
 @Database(
@@ -20,9 +22,10 @@ import com.eflc.mintdrop.room.dao.entity.SubcategoryRow
         Subcategory::class,
         SubcategoryRow::class,
         EntryHistory::class,
-        PaymentMethod::class
+        PaymentMethod::class,
+        SubcategoryMonthlyBalance::class
     ],
-    version = 3
+    version = 4
 )
 @TypeConverters(Converters::class)
 abstract class JulepDatabase: RoomDatabase() {
@@ -31,4 +34,5 @@ abstract class JulepDatabase: RoomDatabase() {
     abstract val subcategoryRowDao: SubcategoryRowDao
     abstract val entryHistoryDao: EntryHistoryDao
     abstract val paymentMethodDao: PaymentMethodDao
+    abstract val subcategoryMonthlyBalanceDao: SubcategoryMonthlyBalanceDao
 }

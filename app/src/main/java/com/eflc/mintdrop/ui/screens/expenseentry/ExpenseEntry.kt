@@ -58,12 +58,12 @@ fun ExpenseEntryScreen(
     LaunchedEffect(key1 = true, block = {
         expenseEntryViewModel.getEntryHistory(categoryType, expenseSubCategory.id)
         expenseEntryViewModel.getPaymentMethods()
-        expenseEntryViewModel.getMonthlyExpenses(categoryType, expenseSubCategory.id)
+        expenseEntryViewModel.getMonthlyBalance(categoryType, expenseSubCategory.id)
     })
 
     val history by expenseEntryViewModel.entryHistoryList.collectAsState()
     val paymentMethods by expenseEntryViewModel.paymentMethodList.collectAsState()
-    val monthlyExpense by expenseEntryViewModel.monthlyExpense.collectAsState()
+    val monthlyBalance by expenseEntryViewModel.monthlyBalance.collectAsState()
 
     Column(
         modifier = Modifier
@@ -94,7 +94,7 @@ fun ExpenseEntryScreen(
             modifier = Modifier.padding(bottom = 32.dp)
         )
         Text(
-            text = "Total del mes: $ ${FormatUtils.formatAsCurrency(monthlyExpense)}",
+            text = "Total del mes: $ ${FormatUtils.formatAsCurrency(monthlyBalance.balance)}",
             fontWeight = FontWeight.Light,
             modifier = Modifier.padding(bottom = 16.dp)
         )
@@ -167,7 +167,7 @@ fun ExpenseEntryScreen(
                         sheet,
                         isSharedExpense,
                         expenseSubCategory,
-                        selectedPaymentMethod
+                        selectedPaymentMethod,
                     )
                     amountInput = ""
                     descriptionInput = ""

@@ -5,15 +5,18 @@ import androidx.room.Room
 import com.eflc.mintdrop.repository.CategoryRepository
 import com.eflc.mintdrop.repository.EntryHistoryRepository
 import com.eflc.mintdrop.repository.PaymentMethodRepository
+import com.eflc.mintdrop.repository.SubcategoryMonthlyBalanceRepository
 import com.eflc.mintdrop.repository.SubcategoryRepository
 import com.eflc.mintdrop.repository.SubcategoryRowRepository
 import com.eflc.mintdrop.repository.impl.CategoryRepositoryImpl
 import com.eflc.mintdrop.repository.impl.EntryHistoryRepositoryImpl
 import com.eflc.mintdrop.repository.impl.PaymentMethodRepositoryImpl
+import com.eflc.mintdrop.repository.impl.SubcategoryMonthlyBalanceRepositoryImpl
 import com.eflc.mintdrop.repository.impl.SubcategoryRepositoryImpl
 import com.eflc.mintdrop.repository.impl.SubcategoryRowRepositoryImpl
 import com.eflc.mintdrop.room.JulepDatabase
 import com.eflc.mintdrop.room.migration.MigrationFrom2To3
+import com.eflc.mintdrop.room.migration.MigrationFrom3To4
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -31,7 +34,8 @@ object DatabaseModule {
             JulepDatabase::class.java,
             "julep.db")
         .addMigrations(
-            MigrationFrom2To3()
+            MigrationFrom2To3(),
+            MigrationFrom3To4()
         )
         .build()
     }
@@ -64,5 +68,11 @@ object DatabaseModule {
     @Singleton
     fun providePaymentMethodRepository(db: JulepDatabase): PaymentMethodRepository {
         return PaymentMethodRepositoryImpl(db.paymentMethodDao)
+    }
+
+    @Provides
+    @Singleton
+    fun provideSubcategoryMonthlyBalanceRepository(db: JulepDatabase): SubcategoryMonthlyBalanceRepository {
+        return SubcategoryMonthlyBalanceRepositoryImpl(db.subcategoryMonthlyBalanceDao)
     }
 }

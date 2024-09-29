@@ -7,6 +7,7 @@ import com.eflc.mintdrop.models.ExpenseCategory
 import com.eflc.mintdrop.models.ExpenseSubCategory
 import com.eflc.mintdrop.repository.CategoryRepository
 import com.eflc.mintdrop.repository.GoogleSheetsRepository
+import com.eflc.mintdrop.repository.SubcategoryMonthlyBalanceRepository
 import com.eflc.mintdrop.repository.SubcategoryRepository
 import com.eflc.mintdrop.repository.SubcategoryRowRepository
 import com.eflc.mintdrop.room.dao.entity.Category
@@ -21,6 +22,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import java.time.LocalDate
 import javax.inject.Inject
 
 @HiltViewModel
@@ -29,9 +31,28 @@ class IncomeViewModel @Inject constructor(
     private val categoryRepository: CategoryRepository,
     private val subcategoryRepository: SubcategoryRepository,
     private val subcategoryRowRepository: SubcategoryRowRepository,
+    private val subcategoryMonthlyBalanceRepository: SubcategoryMonthlyBalanceRepository
 ) : ViewModel() {
     private val _incomeCategoryList = MutableStateFlow(emptyList<ExpenseCategory>())
     val incomeCategoryList = _incomeCategoryList.asStateFlow()
+
+    private val _monthlyBalance = MutableStateFlow(0.0)
+    val monthlyBalance = _monthlyBalance.asStateFlow()
+
+    fun getMonthlyBalance() {
+        viewModelScope.launch(Dispatchers.IO) {
+            val currentMonth = LocalDate.now().monthValue
+            val currentYear = LocalDate.now().year
+            val totalMonthlyBalance = categoryRepository.findCategoriesByType(EntryType.INCOME).map {
+                    category -> subcategoryMonthlyBalanceRepository.findCategoryMonthlyBalanceByCategoryIdAndPeriod(
+                category.category.uid,
+                currentYear,
+                currentMonth
+            ).sumOf { it.balance }
+            }.sumOf { it }
+            _monthlyBalance.tryEmit(totalMonthlyBalance)
+        }
+    }
 
     fun getIncomeCategories() {
         viewModelScope.launch(Dispatchers.IO) {

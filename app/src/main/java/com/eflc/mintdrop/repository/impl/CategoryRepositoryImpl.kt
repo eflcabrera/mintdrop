@@ -5,34 +5,28 @@ import com.eflc.mintdrop.repository.CategoryRepository
 import com.eflc.mintdrop.room.dao.CategoryDao
 import com.eflc.mintdrop.room.dao.entity.Category
 import com.eflc.mintdrop.room.dao.entity.relationship.CategoryAndSubcategory
-import kotlinx.coroutines.Dispatchers.IO
-import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 class CategoryRepositoryImpl @Inject constructor(
     private val dao: CategoryDao
 ) : CategoryRepository {
     override suspend fun saveCategory(categoryEntity: Category): Long {
-        return withContext(IO) {
-            dao.saveCategory(categoryEntity)
-        }
+        return dao.saveCategory(categoryEntity)
     }
 
     override suspend fun findAllCategories(): List<CategoryAndSubcategory> {
-        return withContext(IO) {
-            dao.getCategories()
-        }
+        return dao.getCategories()
     }
 
     override suspend fun findCategoryById(id: Long): CategoryAndSubcategory {
-        return withContext(IO) {
-            dao.getCategory(id)
-        }
+        return dao.getCategory(id)
     }
 
     override suspend fun findCategoriesByType(entryType: EntryType): List<CategoryAndSubcategory> {
-        return withContext(IO) {
-            dao.getCategoriesByType(entryType)
-        }
+        return dao.getCategoriesByType(entryType)
+    }
+
+    override suspend fun findCategoryByExternalIdAndEntryType(externalId: String, entryType: EntryType): Category {
+        return dao.getCategoryByExternalIdAndEntryType(externalId, entryType)
     }
 }

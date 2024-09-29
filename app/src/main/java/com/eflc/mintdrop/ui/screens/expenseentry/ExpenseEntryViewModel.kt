@@ -3,15 +3,16 @@ package com.eflc.mintdrop.ui.screens.expenseentry
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.eflc.mintdrop.models.EntryType
-import com.eflc.mintdrop.models.ExpenseEntryRequest
 import com.eflc.mintdrop.models.ExpenseEntryResponse
 import com.eflc.mintdrop.models.ExpenseSubCategory
 import com.eflc.mintdrop.repository.EntryHistoryRepository
-import com.eflc.mintdrop.repository.GoogleSheetsRepository
 import com.eflc.mintdrop.repository.PaymentMethodRepository
+import com.eflc.mintdrop.repository.SubcategoryMonthlyBalanceRepository
 import com.eflc.mintdrop.repository.SubcategoryRepository
 import com.eflc.mintdrop.room.dao.entity.EntryHistory
 import com.eflc.mintdrop.room.dao.entity.PaymentMethod
+import com.eflc.mintdrop.room.dao.entity.SubcategoryMonthlyBalance
+import com.eflc.mintdrop.service.record.EntryRecordService
 import com.eflc.mintdrop.utils.Constants
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineScope
@@ -26,11 +27,12 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ExpenseEntryViewModel @Inject constructor(
-    private val googleSheetsRepository: GoogleSheetsRepository,
     private val coroutineScope: CoroutineScope,
     private val entryHistoryRepository: EntryHistoryRepository,
     private val subcategoryRepository: SubcategoryRepository,
-    private val paymentMethodRepository: PaymentMethodRepository
+    private val paymentMethodRepository: PaymentMethodRepository,
+    private val subcategoryMonthlyBalanceRepository: SubcategoryMonthlyBalanceRepository,
+    private val entryRecordService: EntryRecordService
 ) : ViewModel() {
     private val _expenseEntryResponse = MutableStateFlow(ExpenseEntryResponse("", 0.0, 0.0))
 
@@ -43,21 +45,23 @@ class ExpenseEntryViewModel @Inject constructor(
     private val _isSaving = MutableStateFlow(false)
     val isSaving = _isSaving.asStateFlow()
 
-    private val _monthlyExpense = MutableStateFlow(0.0)
-    val monthlyExpense = _monthlyExpense.asStateFlow()
+    private val _monthlyBalance = MutableStateFlow(SubcategoryMonthlyBalance(0, 0, 0, 0, 0.0))
+    val monthlyBalance = _monthlyBalance.asStateFlow()
 
     fun postExpense(amount: Double,
                     description: String,
                     sheet: String,
                     isShared: Boolean,
                     expenseSubCategory: ExpenseSubCategory,
-                    paymentMethod: PaymentMethod?
+                    paymentMethod: PaymentMethod?,
     ) {
         coroutineScope.launch {
             _isSaving.tryEmit(true)
             val categoryType = if (sheet == Constants.EXPENSE_SHEET_NAME) EntryType.EXPENSE else EntryType.INCOME
 
             val subcategory = subcategoryRepository.findSubcategoryByExternalIdAndCategoryType(categoryType, expenseSubCategory.id)
+
+            // Create new entry
             val entryHistory = EntryHistory(
                 subcategoryId = subcategory.uid,
                 amount = amount,
@@ -66,25 +70,12 @@ class ExpenseEntryViewModel @Inject constructor(
                 isShared = isShared,
                 paymentMethodId = paymentMethod?.uid
             )
-            entryHistoryRepository.saveEntryHistory(entryHistory)
-            subcategory.lastEntryOn = LocalDateTime.now()
-            subcategory.lastModified = LocalDateTime.now()
-            subcategoryRepository.saveSubcategory(subcategory)
 
-            val expenseEntryResponse : ExpenseEntryResponse = googleSheetsRepository.postExpense(
-                buildExpenseEntryRequest(
-                    row = expenseSubCategory.rowNumber,
-                    amount = amount,
-                    description = description,
-                    sheet = sheet,
-                    isOwedInstallments = false,
-                    totalInstallments = 1,
-                    paymentMethod = paymentMethod?.description ?: ""
-                )
-            )
+            val expenseEntryResponse : ExpenseEntryResponse = entryRecordService.createRecord(entryHistory, sheet, paymentMethod)!!
+
             _expenseEntryResponse.tryEmit(expenseEntryResponse).also {
                 getEntryHistory(categoryType, expenseSubCategory.id)
-                getMonthlyExpenses(categoryType, expenseSubCategory.id)
+                getMonthlyBalance(categoryType, expenseSubCategory.id)
                 _isSaving.tryEmit(false)
             }
         }
@@ -104,41 +95,38 @@ class ExpenseEntryViewModel @Inject constructor(
         }
     }
 
-    fun getMonthlyExpenses(categoryType: EntryType, subCategoryId: String) {
+    fun getMonthlyBalance(categoryType: EntryType, subCategoryId: String) {
         viewModelScope.launch(IO) {
+            val currentMonth = LocalDate.now().monthValue
+            val currentYear = LocalDate.now().year
+
             val subcategory = subcategoryRepository.findSubcategoryByExternalIdAndCategoryType(categoryType, subCategoryId)
-            val total = entryHistoryRepository.findEntryHistoryBySubcategoryId(subcategory.uid)
-                .filter { it.date.month.value == LocalDate.now().monthValue }
-                .sumOf { it.amount }
-            _monthlyExpense.tryEmit(total)
+            var balance = subcategoryMonthlyBalanceRepository.findBalanceBySubcategoryIdAndPeriod(
+                subcategory.uid,
+                currentYear,
+                currentMonth
+            )
+
+            if (balance == null) {
+                val total: Double = entryHistoryRepository.findEntryHistoryBySubcategoryId(subcategory.uid)
+                    .filter { it.date.month.value == LocalDate.now().monthValue }
+                    .sumOf { it.amount }
+
+                balance = SubcategoryMonthlyBalance(
+                    subcategoryId = subcategory.uid,
+                    month = currentMonth,
+                    year = currentYear,
+                    balance = total
+                )
+                subcategoryMonthlyBalanceRepository.saveSubcategoryMonthlyBalance(balance)
+            }
+
+            _monthlyBalance.tryEmit(balance)
         }
     }
 
     override fun onCleared() {
         super.onCleared()
         coroutineScope.cancel()
-    }
-
-    private fun buildExpenseEntryRequest(
-        row: Int,
-        amount: Double,
-        description: String = "",
-        month: Int = LocalDate.now().monthValue,
-        sheet: String,
-        isOwedInstallments: Boolean,
-        totalInstallments: Int,
-        paymentMethod: String
-    ): ExpenseEntryRequest {
-        return ExpenseEntryRequest(
-            spreadsheetId = Constants.GOOGLE_SHEET_ID_2024,
-            sheetName = sheet,
-            month = month,
-            amount = amount,
-            description = description,
-            row = row,
-            isOwedInstallments = isOwedInstallments,
-            totalInstallments = totalInstallments,
-            paymentMethod = paymentMethod
-        )
     }
 }
