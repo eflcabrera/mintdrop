@@ -97,7 +97,8 @@ class EntryRecordServiceImpl @Inject constructor(
                 sheet = if (cat.category.type == EntryType.EXPENSE) Constants.EXPENSE_SHEET_NAME else Constants.INCOME_SHEET_NAME,
                 isOwedInstallments = false,
                 totalInstallments = 1,
-                paymentMethod = ""
+                paymentMethod = "",
+                month = entryRecord.date.monthValue
             )
         )
     }
