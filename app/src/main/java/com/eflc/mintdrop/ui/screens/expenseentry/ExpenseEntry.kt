@@ -19,6 +19,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
+import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -38,11 +39,14 @@ import com.eflc.mintdrop.models.EntryType
 import com.eflc.mintdrop.models.ExpenseSubCategory
 import com.eflc.mintdrop.room.dao.entity.EntryHistory
 import com.eflc.mintdrop.room.dao.entity.PaymentMethod
+import com.eflc.mintdrop.ui.components.EntryDatePicker
 import com.eflc.mintdrop.ui.components.LabeledCheckbox
 import com.eflc.mintdrop.ui.components.PaymentMethodDropdown
 import com.eflc.mintdrop.ui.components.card.EntryHistoryCard
 import com.eflc.mintdrop.utils.Constants
 import com.eflc.mintdrop.utils.FormatUtils
+import com.eflc.mintdrop.utils.FormatUtils.Companion.convertMillisToStringDate
+import java.time.Instant
 import java.time.LocalDate
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -78,11 +82,17 @@ fun ExpenseEntryScreen(
         var isSharedExpenseInput by remember { mutableStateOf(false) }
         var paymentMethodInput by remember { mutableStateOf<PaymentMethod?>(null) }
         var expenseSaved by remember { mutableStateOf(false) }
+        var showDatePicker by remember { mutableStateOf(false) }
+        val datePickerState = rememberDatePickerState()
+
 
         val amount = amountInput.toDoubleOrNull() ?: 0.0
         val description = descriptionInput
         val isSharedExpense = isSharedExpenseInput
         val selectedPaymentMethod = paymentMethodInput
+        val selectedDate = datePickerState.selectedDateMillis?.let {
+            convertMillisToStringDate(it.plus(1000 * 60 * 60 * 5))
+        } ?: convertMillisToStringDate(Instant.now().toEpochMilli())
 
         val isSaving by expenseEntryViewModel.isSaving.collectAsState()
 
@@ -135,6 +145,14 @@ fun ExpenseEntryScreen(
                 .fillMaxWidth()
         )
 
+        EntryDatePicker(
+            showDatePicker,
+            datePickerState,
+            selectedDate,
+            { showDatePicker = !showDatePicker },
+            { showDatePicker = false }
+        )
+
         if (isExpense) {
             PaymentMethodDropdown(
                 paymentMethods = paymentMethods,
@@ -168,6 +186,7 @@ fun ExpenseEntryScreen(
                         isSharedExpense,
                         expenseSubCategory,
                         selectedPaymentMethod,
+                        selectedDate,
                     )
                     amountInput = ""
                     descriptionInput = ""
