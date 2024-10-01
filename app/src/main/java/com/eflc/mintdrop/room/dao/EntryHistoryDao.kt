@@ -27,7 +27,7 @@ interface EntryHistoryDao {
     @Query("""
         SELECT * from entry_history
         WHERE date > datetime('now', '-30 days')
-        ORDER BY date DESC
+        ORDER BY created_on DESC
         LIMIT 1
     """)
     fun getTopEntryOrderByDateDesc(): EntryHistory

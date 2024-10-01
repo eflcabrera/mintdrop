@@ -14,6 +14,7 @@ import com.eflc.mintdrop.room.dao.entity.PaymentMethod
 import com.eflc.mintdrop.room.dao.entity.SubcategoryMonthlyBalance
 import com.eflc.mintdrop.service.record.EntryRecordService
 import com.eflc.mintdrop.utils.Constants
+import com.eflc.mintdrop.utils.FormatUtils.Companion.formatDateFromString
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers.IO
@@ -23,6 +24,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.LocalTime
 import javax.inject.Inject
 
 @HiltViewModel
@@ -54,6 +56,7 @@ class ExpenseEntryViewModel @Inject constructor(
                     isShared: Boolean,
                     expenseSubCategory: ExpenseSubCategory,
                     paymentMethod: PaymentMethod?,
+                    selectedDate: String
     ) {
         coroutineScope.launch {
             _isSaving.tryEmit(true)
@@ -68,7 +71,9 @@ class ExpenseEntryViewModel @Inject constructor(
                 description = description,
                 lastModified = LocalDateTime.now(),
                 isShared = isShared,
-                paymentMethodId = paymentMethod?.uid
+                paymentMethodId = paymentMethod?.uid,
+                date = formatDateFromString(selectedDate)
+                    .atTime(LocalTime.now().hour, LocalTime.now().minute, LocalTime.now().second)
             )
 
             val expenseEntryResponse : ExpenseEntryResponse = entryRecordService.createRecord(entryHistory, sheet, paymentMethod)!!

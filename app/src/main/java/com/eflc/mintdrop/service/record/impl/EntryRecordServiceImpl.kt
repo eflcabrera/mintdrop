@@ -34,8 +34,8 @@ class EntryRecordServiceImpl @Inject constructor(
         db.withTransaction {
             entryHistoryRepository.saveEntryHistory(entryRecord)
 
-            val yearValue = LocalDateTime.now().year
-            val monthValue = LocalDateTime.now().monthValue
+            val yearValue = entryRecord.date.year
+            val monthValue = entryRecord.date.monthValue
             val subcategory = subcategoryRepository.findSubcategoryById(entryRecord.subcategoryId)
             val row = subcategoryRowRepository.findRowBySubcategoryId(subcategory.uid)
             val subcategoryBalance = subcategoryMonthlyBalanceRepository.findBalanceBySubcategoryIdAndPeriod(
@@ -66,7 +66,8 @@ class EntryRecordServiceImpl @Inject constructor(
                     sheet = sheetName,
                     isOwedInstallments = false,
                     totalInstallments = 1,
-                    paymentMethod = paymentMethod?.description ?: ""
+                    paymentMethod = paymentMethod?.description ?: "",
+                    month = monthValue
                 )
             )
         }
@@ -96,7 +97,8 @@ class EntryRecordServiceImpl @Inject constructor(
                 sheet = if (cat.category.type == EntryType.EXPENSE) Constants.EXPENSE_SHEET_NAME else Constants.INCOME_SHEET_NAME,
                 isOwedInstallments = false,
                 totalInstallments = 1,
-                paymentMethod = ""
+                paymentMethod = "",
+                month = entryRecord.date.monthValue
             )
         )
     }
