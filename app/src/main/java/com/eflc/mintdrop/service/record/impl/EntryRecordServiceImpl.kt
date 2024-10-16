@@ -76,31 +76,34 @@ class EntryRecordServiceImpl @Inject constructor(
     }
 
     override suspend fun deleteRecord(entryRecord: EntryHistory) {
-        entryHistoryRepository.deleteEntryHistory(entryRecord)
-        val subcategory = subcategoryRepository.findSubcategoryById(entryRecord.subcategoryId)
-        val currentBalance = subcategoryMonthlyBalanceRepository.findBalanceBySubcategoryIdAndPeriod(
-            subcategory.uid, entryRecord.date.year, entryRecord.date.monthValue
-        )
+        db.withTransaction {
+            entryHistoryRepository.deleteEntryHistory(entryRecord)
+            val subcategory = subcategoryRepository.findSubcategoryById(entryRecord.subcategoryId)
+            val currentBalance =
+                subcategoryMonthlyBalanceRepository.findBalanceBySubcategoryIdAndPeriod(
+                    subcategory.uid, entryRecord.date.year, entryRecord.date.monthValue
+                )
 
-        if (currentBalance != null) {
-            currentBalance.balance = currentBalance.balance.minus(entryRecord.amount)
-            subcategoryMonthlyBalanceRepository.saveSubcategoryMonthlyBalance(currentBalance)
-        }
+            if (currentBalance != null) {
+                currentBalance.balance = currentBalance.balance.minus(entryRecord.amount)
+                subcategoryMonthlyBalanceRepository.saveSubcategoryMonthlyBalance(currentBalance)
+            }
 
-        val row = subcategoryRowRepository.findRowBySubcategoryId(subcategory.uid)
-        val cat = categoryRepository.findCategoryById(subcategory.categoryId)
-        googleSheetsRepository.postExpense(
-            buildExpenseEntryRequest(
-                row = row.rowNumber,
-                amount = -1 * entryRecord.amount,
-                description = "UNDO ${entryRecord.description}",
-                sheet = if (cat.category.type == EntryType.EXPENSE) Constants.EXPENSE_SHEET_NAME else Constants.INCOME_SHEET_NAME,
-                isOwedInstallments = false,
-                totalInstallments = 1,
-                paymentMethod = "",
-                month = entryRecord.date.monthValue
+            val row = subcategoryRowRepository.findRowBySubcategoryId(subcategory.uid)
+            val cat = categoryRepository.findCategoryById(subcategory.categoryId)
+            googleSheetsRepository.postExpense(
+                buildExpenseEntryRequest(
+                    row = row.rowNumber,
+                    amount = -1 * entryRecord.amount,
+                    description = "UNDO ${entryRecord.description}",
+                    sheet = if (cat.category.type == EntryType.EXPENSE) Constants.EXPENSE_SHEET_NAME else Constants.INCOME_SHEET_NAME,
+                    isOwedInstallments = false,
+                    totalInstallments = 1,
+                    paymentMethod = "",
+                    month = entryRecord.date.monthValue
+                )
             )
-        )
+        }
     }
 
     private fun buildExpenseEntryRequest(
