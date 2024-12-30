@@ -41,4 +41,6 @@ data class EntryHistory(
     val isShared: Boolean? = false,
     @ColumnInfo(name = "payment_method_id")
     val paymentMethodId: Long? = null,
+    @ColumnInfo(name = "paid_by")
+    val paidBy: Long? = null
 )
