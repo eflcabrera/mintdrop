@@ -17,6 +17,7 @@ import com.eflc.mintdrop.repository.impl.SubcategoryRowRepositoryImpl
 import com.eflc.mintdrop.room.JulepDatabase
 import com.eflc.mintdrop.room.migration.MigrationFrom2To3
 import com.eflc.mintdrop.room.migration.MigrationFrom3To4
+import com.eflc.mintdrop.room.migration.MigrationFrom4To5
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -35,7 +36,8 @@ object DatabaseModule {
             "julep.db")
         .addMigrations(
             MigrationFrom2To3(),
-            MigrationFrom3To4()
+            MigrationFrom3To4(),
+            MigrationFrom4To5()
         )
         .build()
     }
