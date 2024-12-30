@@ -7,7 +7,7 @@ import androidx.room.PrimaryKey
 
 @Entity(tableName = "shared_expense_entry_detail", foreignKeys = [
     ForeignKey(
-        entity = EntryRecord::class,
+        entity = EntryHistory::class,
         parentColumns = ["uid"],
         childColumns = ["entry_record_id"],
         onDelete = ForeignKey.RESTRICT,
@@ -20,7 +20,7 @@ import androidx.room.PrimaryKey
         onDelete = ForeignKey.RESTRICT,
         onUpdate = ForeignKey.CASCADE
     ),
-    // Debería estar en entry_history
+    // TODO: should probably go in entry_history
     ForeignKey(
         entity = SharedExpenseConfiguration::class,
         parentColumns = ["uid"],
