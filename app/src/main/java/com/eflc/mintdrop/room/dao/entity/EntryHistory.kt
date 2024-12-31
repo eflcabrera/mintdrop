@@ -42,5 +42,7 @@ data class EntryHistory(
     @ColumnInfo(name = "payment_method_id")
     val paymentMethodId: Long? = null,
     @ColumnInfo(name = "paid_by")
-    val paidBy: Long? = null
+    val paidBy: Long? = null,
+    @ColumnInfo(name = "is_settled")
+    val isSettled: Boolean? = null
 )
