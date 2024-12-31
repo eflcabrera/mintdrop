@@ -51,6 +51,7 @@ class MigrationFrom4To5: Migration(4, 5) {
             """.trimIndent())
 
             execSQL("ALTER TABLE entry_history ADD COLUMN paid_by INTEGER")
+            execSQL("ALTER TABLE entry_history ADD COLUMN is_settled INTEGER")
         }
     }
 }
