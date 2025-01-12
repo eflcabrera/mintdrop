@@ -6,6 +6,7 @@ import com.eflc.mintdrop.models.EntryType
 import com.eflc.mintdrop.models.ExpenseCategory
 import com.eflc.mintdrop.models.ExpenseSubCategory
 import com.eflc.mintdrop.repository.CategoryRepository
+import com.eflc.mintdrop.repository.ExternalSheetRefRepository
 import com.eflc.mintdrop.repository.GoogleSheetsRepository
 import com.eflc.mintdrop.repository.SubcategoryMonthlyBalanceRepository
 import com.eflc.mintdrop.repository.SubcategoryRepository
@@ -31,7 +32,8 @@ class IncomeViewModel @Inject constructor(
     private val categoryRepository: CategoryRepository,
     private val subcategoryRepository: SubcategoryRepository,
     private val subcategoryRowRepository: SubcategoryRowRepository,
-    private val subcategoryMonthlyBalanceRepository: SubcategoryMonthlyBalanceRepository
+    private val subcategoryMonthlyBalanceRepository: SubcategoryMonthlyBalanceRepository,
+    private val externalSheetRefRepository: ExternalSheetRefRepository
 ) : ViewModel() {
     private val _incomeCategoryList = MutableStateFlow(emptyList<ExpenseCategory>())
     val incomeCategoryList = _incomeCategoryList.asStateFlow()
@@ -61,7 +63,8 @@ class IncomeViewModel @Inject constructor(
             var data: List<CategoryAndSubcategory> = categoryRepository.findCategoriesByType(EntryType.INCOME)
 
             if (data.isEmpty()) {
-                val response = googleSheetsRepository.getCategories(Constants.GOOGLE_SHEET_ID_2024, Constants.INCOME_SHEET_NAME)
+                val spreadsheetId = externalSheetRefRepository.findExternalSheetRefByYear(LocalDate.now().year)?.sheetId!!
+                val response = googleSheetsRepository.getCategories(spreadsheetId, Constants.INCOME_SHEET_NAME)
                 categories = response.categories.toMutableList()
                 response.categories
                     .filter { it.name != "end" && !Strings.isEmptyOrWhitespace(it.id) }

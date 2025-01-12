@@ -2,6 +2,7 @@ package com.eflc.mintdrop.di
 
 import com.eflc.mintdrop.repository.CategoryRepository
 import com.eflc.mintdrop.repository.EntryHistoryRepository
+import com.eflc.mintdrop.repository.ExternalSheetRefRepository
 import com.eflc.mintdrop.repository.GoogleSheetsRepository
 import com.eflc.mintdrop.repository.SubcategoryMonthlyBalanceRepository
 import com.eflc.mintdrop.repository.SubcategoryRepository
@@ -28,7 +29,8 @@ object ServiceModule {
         subcategoryRowRepository: SubcategoryRowRepository,
         subcategoryMonthlyBalanceRepository: SubcategoryMonthlyBalanceRepository,
         googleSheetsRepository: GoogleSheetsRepository,
-        categoryRepository: CategoryRepository
+        categoryRepository: CategoryRepository,
+        externalSheetRefRepository: ExternalSheetRefRepository
     ): EntryRecordService {
         return EntryRecordServiceImpl(
             db,
@@ -38,6 +40,7 @@ object ServiceModule {
             subcategoryRowRepository,
             subcategoryMonthlyBalanceRepository,
             googleSheetsRepository,
+            externalSheetRefRepository
         )
     }
 }

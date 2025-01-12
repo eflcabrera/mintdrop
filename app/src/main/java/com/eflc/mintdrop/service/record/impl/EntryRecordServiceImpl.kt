@@ -6,6 +6,7 @@ import com.eflc.mintdrop.models.ExpenseEntryRequest
 import com.eflc.mintdrop.models.ExpenseEntryResponse
 import com.eflc.mintdrop.repository.CategoryRepository
 import com.eflc.mintdrop.repository.EntryHistoryRepository
+import com.eflc.mintdrop.repository.ExternalSheetRefRepository
 import com.eflc.mintdrop.repository.GoogleSheetsRepository
 import com.eflc.mintdrop.repository.SubcategoryMonthlyBalanceRepository
 import com.eflc.mintdrop.repository.SubcategoryRepository
@@ -27,7 +28,8 @@ class EntryRecordServiceImpl @Inject constructor(
     private val categoryRepository: CategoryRepository,
     private val subcategoryRowRepository: SubcategoryRowRepository,
     private val subcategoryMonthlyBalanceRepository: SubcategoryMonthlyBalanceRepository,
-    private val googleSheetsRepository: GoogleSheetsRepository
+    private val googleSheetsRepository: GoogleSheetsRepository,
+    private val externalSheetRefRepository: ExternalSheetRefRepository
 ) : EntryRecordService {
     override suspend fun createRecord(entryRecord: EntryHistory, sheetName: String, paymentMethod: PaymentMethod?): ExpenseEntryResponse? {
         var expenseEntryResponse: ExpenseEntryResponse? = null
@@ -35,6 +37,7 @@ class EntryRecordServiceImpl @Inject constructor(
             entryHistoryRepository.saveEntryHistory(entryRecord)
 
             val yearValue = entryRecord.date.year
+            val spreadsheetId = externalSheetRefRepository.findExternalSheetRefByYear(yearValue)?.sheetId!!
             val monthValue = entryRecord.date.monthValue
             val subcategory = subcategoryRepository.findSubcategoryById(entryRecord.subcategoryId)
             val row = subcategoryRowRepository.findRowBySubcategoryId(subcategory.uid)
@@ -67,7 +70,8 @@ class EntryRecordServiceImpl @Inject constructor(
                     isOwedInstallments = false,
                     totalInstallments = 1,
                     paymentMethod = paymentMethod?.description ?: "",
-                    month = monthValue
+                    month = monthValue,
+                    spreadsheetId = spreadsheetId
                 )
             )
         }
@@ -77,6 +81,7 @@ class EntryRecordServiceImpl @Inject constructor(
 
     override suspend fun deleteRecord(entryRecord: EntryHistory) {
         db.withTransaction {
+            val spreadsheetId = externalSheetRefRepository.findExternalSheetRefByYear(entryRecord.date.year)?.sheetId!!
             entryHistoryRepository.deleteEntryHistory(entryRecord)
             val subcategory = subcategoryRepository.findSubcategoryById(entryRecord.subcategoryId)
             val currentBalance =
@@ -100,7 +105,8 @@ class EntryRecordServiceImpl @Inject constructor(
                     isOwedInstallments = false,
                     totalInstallments = 1,
                     paymentMethod = "",
-                    month = entryRecord.date.monthValue
+                    month = entryRecord.date.monthValue,
+                    spreadsheetId = spreadsheetId
                 )
             )
         }
@@ -114,10 +120,11 @@ class EntryRecordServiceImpl @Inject constructor(
         sheet: String,
         isOwedInstallments: Boolean,
         totalInstallments: Int,
-        paymentMethod: String
+        paymentMethod: String,
+        spreadsheetId: String
     ): ExpenseEntryRequest {
         return ExpenseEntryRequest(
-            spreadsheetId = Constants.GOOGLE_SHEET_ID_2024,
+            spreadsheetId = spreadsheetId,
             sheetName = sheet,
             month = month,
             amount = amount,
