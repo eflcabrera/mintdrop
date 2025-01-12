@@ -40,7 +40,7 @@ import com.eflc.mintdrop.room.dao.entity.SubcategoryRow
         SharedExpenseSettlement::class,
         ExternalSheetRef::class
     ],
-    version = 5
+    version = 6
 )
 @TypeConverters(Converters::class)
 abstract class JulepDatabase: RoomDatabase() {
