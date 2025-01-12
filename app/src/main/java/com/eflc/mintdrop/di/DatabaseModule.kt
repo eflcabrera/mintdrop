@@ -6,6 +6,7 @@ import com.eflc.mintdrop.repository.CategoryRepository
 import com.eflc.mintdrop.repository.EntryHistoryRepository
 import com.eflc.mintdrop.repository.ExternalSheetRefRepository
 import com.eflc.mintdrop.repository.PaymentMethodRepository
+import com.eflc.mintdrop.repository.SharedExpenseRepository
 import com.eflc.mintdrop.repository.SubcategoryMonthlyBalanceRepository
 import com.eflc.mintdrop.repository.SubcategoryRepository
 import com.eflc.mintdrop.repository.SubcategoryRowRepository
@@ -13,6 +14,7 @@ import com.eflc.mintdrop.repository.impl.CategoryRepositoryImpl
 import com.eflc.mintdrop.repository.impl.EntryHistoryRepositoryImpl
 import com.eflc.mintdrop.repository.impl.ExternalSheetRefRepositoryImpl
 import com.eflc.mintdrop.repository.impl.PaymentMethodRepositoryImpl
+import com.eflc.mintdrop.repository.impl.SharedExpenseRepositoryImpl
 import com.eflc.mintdrop.repository.impl.SubcategoryMonthlyBalanceRepositoryImpl
 import com.eflc.mintdrop.repository.impl.SubcategoryRepositoryImpl
 import com.eflc.mintdrop.repository.impl.SubcategoryRowRepositoryImpl
@@ -20,6 +22,7 @@ import com.eflc.mintdrop.room.JulepDatabase
 import com.eflc.mintdrop.room.migration.MigrationFrom2To3
 import com.eflc.mintdrop.room.migration.MigrationFrom3To4
 import com.eflc.mintdrop.room.migration.MigrationFrom4To5
+import com.eflc.mintdrop.room.migration.MigrationFrom5To6
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -39,7 +42,8 @@ object DatabaseModule {
         .addMigrations(
             MigrationFrom2To3(),
             MigrationFrom3To4(),
-            MigrationFrom4To5()
+            MigrationFrom4To5(),
+            MigrationFrom5To6()
         )
         .build()
     }
@@ -78,6 +82,17 @@ object DatabaseModule {
     @Singleton
     fun provideSubcategoryMonthlyBalanceRepository(db: JulepDatabase): SubcategoryMonthlyBalanceRepository {
         return SubcategoryMonthlyBalanceRepositoryImpl(db.subcategoryMonthlyBalanceDao)
+    }
+
+    @Provides
+    @Singleton
+    fun provideSharedExpenseRepository(db: JulepDatabase): SharedExpenseRepository {
+        return SharedExpenseRepositoryImpl(
+            db.sharedExpenseConfigurationDao,
+            db.sharedExpenseConfigurationDetailDao,
+            db.sharedExpenseEntryDetailDao,
+            db.sharedExpenseSettlementDao
+        )
     }
 
     @Provides
