@@ -6,13 +6,13 @@ import com.eflc.mintdrop.models.EntryType
 import com.eflc.mintdrop.models.ExpenseCategory
 import com.eflc.mintdrop.models.ExpenseSubCategory
 import com.eflc.mintdrop.repository.CategoryRepository
+import com.eflc.mintdrop.repository.ExternalSheetRefRepository
 import com.eflc.mintdrop.repository.GoogleSheetsRepository
 import com.eflc.mintdrop.repository.SubcategoryMonthlyBalanceRepository
 import com.eflc.mintdrop.repository.SubcategoryRepository
 import com.eflc.mintdrop.repository.SubcategoryRowRepository
 import com.eflc.mintdrop.room.dao.entity.Category
 import com.eflc.mintdrop.room.dao.entity.Subcategory
-import com.eflc.mintdrop.room.dao.entity.SubcategoryMonthlyBalance
 import com.eflc.mintdrop.room.dao.entity.SubcategoryRow
 import com.eflc.mintdrop.room.dao.entity.relationship.CategoryAndSubcategory
 import com.eflc.mintdrop.room.dao.entity.relationship.SubcategoryAndSubcategoryRow
@@ -34,6 +34,7 @@ class ExpenseViewModel @Inject constructor(
     private val subcategoryRepository: SubcategoryRepository,
     private val subcategoryRowRepository: SubcategoryRowRepository,
     private val subcategoryMonthlyBalanceRepository: SubcategoryMonthlyBalanceRepository,
+    private val externalSheetRefRepository: ExternalSheetRefRepository
 ) : ViewModel() {
     private val _expenseCategoryList = MutableStateFlow(emptyList<ExpenseCategory>())
     val expenseCategoryList = _expenseCategoryList.asStateFlow()
@@ -46,7 +47,8 @@ class ExpenseViewModel @Inject constructor(
 
     fun syncExpenseCategories() {
         viewModelScope.launch(IO) {
-            val response = googleSheetsRepository.getCategories(Constants.GOOGLE_SHEET_ID_2024, Constants.EXPENSE_SHEET_NAME)
+            val spreadsheetId = externalSheetRefRepository.findExternalSheetRefByYear(LocalDate.now().year)?.sheetId!!
+            val response = googleSheetsRepository.getCategories(spreadsheetId, Constants.EXPENSE_SHEET_NAME)
             var data: List<CategoryAndSubcategory> = categoryRepository.findCategoriesByType(EntryType.EXPENSE)
 
             response.categories
@@ -86,7 +88,8 @@ class ExpenseViewModel @Inject constructor(
             var data: List<CategoryAndSubcategory> = categoryRepository.findCategoriesByType(EntryType.EXPENSE)
 
             if (data.isEmpty()) {
-                val response = googleSheetsRepository.getCategories(Constants.GOOGLE_SHEET_ID_2024, Constants.EXPENSE_SHEET_NAME)
+                val spreadsheetId = externalSheetRefRepository.findExternalSheetRefByYear(LocalDate.now().year)?.sheetId!!
+                val response = googleSheetsRepository.getCategories(spreadsheetId, Constants.EXPENSE_SHEET_NAME)
                 categories = response.categories.toMutableList()
                 response.categories
                     .filter { it.name != "end" && !Strings.isEmptyOrWhitespace(it.id) }
