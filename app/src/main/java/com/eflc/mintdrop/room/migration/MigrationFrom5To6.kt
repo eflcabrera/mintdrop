@@ -22,8 +22,8 @@ class MigrationFrom5To6: Migration(5, 6) {
                     `user_id` INTEGER,
                     `split_amount` REAL NOT NULL,
                     `split_amount_type` TEXT NOT NULL,
+                    FOREIGN KEY(`configuration_id`) REFERENCES `shared_expense_configuration`(`uid`) ON UPDATE CASCADE ON DELETE RESTRICT
                 )
-                FOREIGN KEY(`configuration_id`) REFERENCES `shared_expense_configuration`(`uid`) ON UPDATE CASCADE ON DELETE RESTRICT
             """.trimIndent())
 
             execSQL("""
@@ -32,7 +32,7 @@ class MigrationFrom5To6: Migration(5, 6) {
                     `settlement_date` TEXT NOT NULL,
                     `amount` REAL NOT NULL,
                     `user_id` INTEGER,
-                    `operation_type` TEXT NOT NULL,
+                    `operation_type` TEXT NOT NULL
                 )
             """.trimIndent())
 

@@ -54,8 +54,8 @@ data class BottomNavigationItem(
 fun HomeScreen(navController: NavHostController = rememberNavController()) {
     val homeViewModel: HomeViewModel = hiltViewModel()
     val items = listOf(
-        BottomNavigationItem(Constants.SHARED_EXPENSE_SHEET_NAME, AppScreens.ExpenseScreen.route, Icons.Filled.Favorite, Icons.Outlined.Favorite),
         BottomNavigationItem(Constants.EXPENSE_SHEET_NAME, AppScreens.ExpenseScreen.route, Icons.Filled.ShoppingCart, Icons.Outlined.ShoppingCart),
+        BottomNavigationItem(Constants.SHARED_EXPENSE_SHEET_NAME, AppScreens.SharedExpensesScreen.route, Icons.Filled.Favorite, Icons.Outlined.Favorite),
         BottomNavigationItem(Constants.INCOME_SHEET_NAME, AppScreens.IncomeScreen.route, Icons.Filled.AddCircle, Icons.Outlined.AddCircle)
     )
 
