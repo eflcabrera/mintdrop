@@ -4,6 +4,8 @@ import androidx.room.withTransaction
 import com.eflc.mintdrop.models.EntryType
 import com.eflc.mintdrop.models.ExpenseEntryRequest
 import com.eflc.mintdrop.models.ExpenseEntryResponse
+import com.eflc.mintdrop.models.SharedExpenseBalanceData
+import com.eflc.mintdrop.models.SharedExpenseSplit
 import com.eflc.mintdrop.repository.CategoryRepository
 import com.eflc.mintdrop.repository.EntryHistoryRepository
 import com.eflc.mintdrop.repository.ExternalSheetRefRepository
@@ -31,6 +33,7 @@ class EntryRecordServiceImpl @Inject constructor(
     private val googleSheetsRepository: GoogleSheetsRepository,
     private val externalSheetRefRepository: ExternalSheetRefRepository
 ) : EntryRecordService {
+
     override suspend fun createRecord(entryRecord: EntryHistory, sheetName: String, paymentMethod: PaymentMethod?): ExpenseEntryResponse? {
         var expenseEntryResponse: ExpenseEntryResponse? = null
         db.withTransaction {
@@ -110,6 +113,35 @@ class EntryRecordServiceImpl @Inject constructor(
                 )
             )
         }
+    }
+
+    override suspend fun calculateSharedExpenseBalance(): SharedExpenseBalanceData {
+        val pendingSharedExpenses = entryHistoryRepository.getPendingSharedExpenses()
+        val sharedExpenseSplits: MutableList<SharedExpenseSplit> = ArrayList()
+        val sharedExpenseBalanceData = SharedExpenseBalanceData(0.0, sharedExpenseSplits)
+
+        pendingSharedExpenses.forEach { pendingExpense ->
+            sharedExpenseBalanceData.total += pendingExpense.entryRecord.amount
+            pendingExpense.sharedExpenseDetails.forEach { sharedExpenseDetail ->
+                val owed = sharedExpenseDetail.split
+                var paid = 0.0
+
+                if (sharedExpenseDetail.userId == pendingExpense.entryRecord.paidBy) {
+                    paid = pendingExpense.entryRecord.amount
+                }
+
+                val split = sharedExpenseSplits.find { sharedExpenseDetail.userId == it.userId }
+                if (split == null) {
+                    sharedExpenseSplits.add(
+                        SharedExpenseSplit(sharedExpenseDetail.userId, owed, paid)
+                    )
+                } else {
+                    split.owed += owed
+                    split.paid += paid
+                }
+            }
+        }
+        return sharedExpenseBalanceData
     }
 
     private fun buildExpenseEntryRequest(

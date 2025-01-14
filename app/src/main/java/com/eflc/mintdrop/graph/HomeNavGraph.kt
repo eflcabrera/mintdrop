@@ -14,6 +14,7 @@ import com.eflc.mintdrop.ui.screens.category.CategoryScreen
 import com.eflc.mintdrop.ui.screens.expense.ExpenseScreen
 import com.eflc.mintdrop.ui.screens.expenseentry.ExpenseEntryScreen
 import com.eflc.mintdrop.ui.screens.income.IncomeScreen
+import com.eflc.mintdrop.ui.screens.shared.SharedExpensesScreen
 
 @Composable
 fun HomeNavigationGraph(navController: NavHostController) {
@@ -28,6 +29,10 @@ fun HomeNavigationGraph(navController: NavHostController) {
 
         composable(route = AppScreens.IncomeScreen.route) {
             IncomeScreen(navController)
+        }
+
+        composable(route = AppScreens.SharedExpensesScreen.route) {
+            SharedExpensesScreen(navController)
         }
 
         composable(
