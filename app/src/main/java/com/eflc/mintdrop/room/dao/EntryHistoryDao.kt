@@ -34,11 +34,7 @@ interface EntryHistoryDao {
     """)
     fun getTopEntryOrderByDateDesc(): EntryHistory
 
-    @Query("""
-        SELECT eh.* FROM entry_history eh
-        INNER JOIN shared_expense_entry_detail seed ON eh.uid = seed.entry_record_id
-        WHERE seed.settlement_id IS NOT NULL
-    """)
+    @Query("SELECT * FROM entry_history WHERE is_settled = 0")
     @Transaction
     fun getEntryRecordsWithUnsettledSharedExpenses(): List<EntryRecordAndSharedExpenseDetails>
 }

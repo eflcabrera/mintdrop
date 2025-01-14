@@ -94,9 +94,13 @@ fun EntryHistoryCard(
                         )
                     }
                     if (entryHistory.isShared == true) {
+                        val colorTint = if ((entryHistory.isSettled == null) || entryHistory.isSettled)
+                            Color.Gray
+                        else
+                            Color(54, 180, 103)
                         Image(
                             painter = painterResource(id = R.drawable.hearts_svgrepo_com),
-                            colorFilter = ColorFilter.tint(color = Color(54, 180, 103)),
+                            colorFilter = ColorFilter.tint(color = colorTint),
                             contentDescription = "shared expense icon",
                             modifier = Modifier.size(20.dp)
                         )
@@ -118,7 +122,8 @@ fun EntryHistoryCardPreview() {
             amount = -91260.15,
             lastModified = LocalDateTime.now(),
             isShared = true,
-            paymentMethodId = 1
+            paymentMethodId = 1,
+            isSettled = false
         ),
         paymentMethods = listOf(PaymentMethod(1, "Crédito", PaymentMethodType.CREDIT_CARD))
     )

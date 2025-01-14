@@ -80,6 +80,7 @@ fun ExpenseEntryScreen(
         var amountInput by remember { mutableStateOf("") }
         var descriptionInput by remember { mutableStateOf("") }
         var isSharedExpenseInput by remember { mutableStateOf(false) }
+        var isPaidByMeInput by remember { mutableStateOf(true) }
         var paymentMethodInput by remember { mutableStateOf<PaymentMethod?>(null) }
         var expenseSaved by remember { mutableStateOf(false) }
         var showDatePicker by remember { mutableStateOf(false) }
@@ -168,6 +169,15 @@ fun ExpenseEntryScreen(
                 modifier = Modifier
                     .clickable { isSharedExpenseInput = !isSharedExpenseInput }
             )
+            if (isSharedExpenseInput) {
+                LabeledCheckbox(
+                    label = "Pagado por mí",
+                    isChecked = isPaidByMeInput,
+                    onCheckedChange = { isPaidByMeInput = it },
+                    modifier = Modifier
+                        .clickable { isPaidByMeInput = !isPaidByMeInput }
+                )
+            }
         }
 
         Column(
@@ -202,20 +212,7 @@ fun ExpenseEntryScreen(
                 Text(text = "Guardar $saveButtonLabel", color = Color.Black)
             }
         }
-        /*
-        if (expenseSaved) {
-            Text(
-                text = "Monto anterior: ${expenseEntryResponse.previousAmount}",
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(bottom = 20.dp)
-            )
-            Text(
-                text = "Monto final: ${expenseEntryResponse.finalAmount}",
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(bottom = 20.dp)
-            )
-        }
-        */
+
         Divider(
             thickness = 1.dp,
             modifier = Modifier.padding(bottom = 16.dp)
