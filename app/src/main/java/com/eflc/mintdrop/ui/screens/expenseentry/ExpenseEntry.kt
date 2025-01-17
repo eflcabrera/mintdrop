@@ -90,6 +90,7 @@ fun ExpenseEntryScreen(
         val amount = amountInput.toDoubleOrNull() ?: 0.0
         val description = descriptionInput
         val isSharedExpense = isSharedExpenseInput
+        val isPaidByMe = isPaidByMeInput
         val selectedPaymentMethod = paymentMethodInput
         val selectedDate = datePickerState.selectedDateMillis?.let {
             convertMillisToStringDate(it.plus(1000 * 60 * 60 * 5))
@@ -197,11 +198,13 @@ fun ExpenseEntryScreen(
                         expenseSubCategory,
                         selectedPaymentMethod,
                         selectedDate,
+                        isPaidByMe
                     )
                     amountInput = ""
                     descriptionInput = ""
                     isSharedExpenseInput = false
                     expenseSaved = true
+                    isPaidByMeInput = true
                 },
                 colors = ButtonDefaults.buttonColors(containerColor = Color(160, 221, 230)),
                 enabled = amountInput.isNotBlank() && amountInput.isNotEmpty(),

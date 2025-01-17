@@ -7,4 +7,5 @@ import java.time.LocalDateTime
 interface SharedExpenseRepository {
     suspend fun saveSharedExpenseEntryDetail(sharedExpenseEntryDetail: SharedExpenseEntryDetail): Long
     suspend fun findSharedExpenseConfigurationForDate(date: LocalDateTime): SharedExpenseConfigurationAndDetails
+    suspend fun deleteSharedExpenseEntryDetailsByEntryRecordId(entryRecordId: Long)
 }

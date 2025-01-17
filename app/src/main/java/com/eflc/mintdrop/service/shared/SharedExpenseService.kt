@@ -5,5 +5,6 @@ import com.eflc.mintdrop.room.dao.entity.SharedExpenseEntryDetail
 
 interface SharedExpenseService {
 
-    suspend fun createSharedExpenseEntries(sharedEntryRecord: EntryHistory): List<SharedExpenseEntryDetail>
+    suspend fun createSharedExpenseEntries(sharedEntryRecord: EntryHistory, entryRecordId: Long): List<SharedExpenseEntryDetail>
+    suspend fun deleteSharedExpenseEntries(sharedEntryRecord: EntryHistory)
 }

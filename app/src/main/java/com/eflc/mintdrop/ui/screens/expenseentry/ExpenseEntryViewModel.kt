@@ -56,7 +56,8 @@ class ExpenseEntryViewModel @Inject constructor(
                     isShared: Boolean,
                     expenseSubCategory: ExpenseSubCategory,
                     paymentMethod: PaymentMethod?,
-                    selectedDate: String
+                    selectedDate: String,
+                    isPaidByMe: Boolean
     ) {
         coroutineScope.launch {
             _isSaving.tryEmit(true)
@@ -73,7 +74,8 @@ class ExpenseEntryViewModel @Inject constructor(
                 isShared = isShared,
                 paymentMethodId = paymentMethod?.uid,
                 date = formatDateFromString(selectedDate)
-                    .atTime(LocalTime.now().hour, LocalTime.now().minute, LocalTime.now().second)
+                    .atTime(LocalTime.now().hour, LocalTime.now().minute, LocalTime.now().second),
+                paidBy = if (isPaidByMe) 1L else 2L
             )
 
             val expenseEntryResponse : ExpenseEntryResponse = entryRecordService.createRecord(entryHistory, sheet, paymentMethod)!!

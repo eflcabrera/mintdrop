@@ -15,7 +15,7 @@ class SharedExpenseServiceImpl @Inject constructor(
     private val sharedExpenseRepository: SharedExpenseRepository,
 ) : SharedExpenseService {
 
-    override suspend fun createSharedExpenseEntries(sharedEntryRecord: EntryHistory): List<SharedExpenseEntryDetail> {
+    override suspend fun createSharedExpenseEntries(sharedEntryRecord: EntryHistory, entryRecordId: Long): List<SharedExpenseEntryDetail> {
         return db.withTransaction {
             val config = sharedExpenseRepository.findSharedExpenseConfigurationForDate(sharedEntryRecord.date)
             val splitMap = calculateSplits(sharedEntryRecord.amount, config)
@@ -24,7 +24,7 @@ class SharedExpenseServiceImpl @Inject constructor(
             config.details.forEach { detail ->
                 val sharedExpenseEntryDetail = detail.userId?.let {
                     SharedExpenseEntryDetail(
-                        entryRecordId = sharedEntryRecord.uid,
+                        entryRecordId = entryRecordId,
                         userId = it,
                         sharedExpenseConfigurationId = config.configuration.uid,
                         split = splitMap[it]!!
@@ -38,6 +38,10 @@ class SharedExpenseServiceImpl @Inject constructor(
 
             return@withTransaction entryDetails
         }
+    }
+
+    override suspend fun deleteSharedExpenseEntries(sharedEntryRecord: EntryHistory) {
+        sharedExpenseRepository.deleteSharedExpenseEntryDetailsByEntryRecordId(sharedEntryRecord.uid)
     }
 
     // Move this to a strategy pattern

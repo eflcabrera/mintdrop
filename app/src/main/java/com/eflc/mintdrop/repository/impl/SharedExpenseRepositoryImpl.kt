@@ -23,4 +23,8 @@ class SharedExpenseRepositoryImpl @Inject constructor(
     override suspend fun findSharedExpenseConfigurationForDate(date: LocalDateTime): SharedExpenseConfigurationAndDetails {
         return configurationDao.getTopEntryOrderByDateDesc(date)
     }
+
+    override suspend fun deleteSharedExpenseEntryDetailsByEntryRecordId(entryRecordId: Long) {
+        entryDetailDao.deleteAllByEntryRecordId(entryRecordId)
+    }
 }

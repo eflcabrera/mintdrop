@@ -18,6 +18,7 @@ import com.eflc.mintdrop.room.dao.entity.EntryHistory
 import com.eflc.mintdrop.room.dao.entity.PaymentMethod
 import com.eflc.mintdrop.room.dao.entity.SubcategoryMonthlyBalance
 import com.eflc.mintdrop.service.record.EntryRecordService
+import com.eflc.mintdrop.service.shared.SharedExpenseService
 import com.eflc.mintdrop.utils.Constants
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -31,13 +32,23 @@ class EntryRecordServiceImpl @Inject constructor(
     private val subcategoryRowRepository: SubcategoryRowRepository,
     private val subcategoryMonthlyBalanceRepository: SubcategoryMonthlyBalanceRepository,
     private val googleSheetsRepository: GoogleSheetsRepository,
-    private val externalSheetRefRepository: ExternalSheetRefRepository
+    private val externalSheetRefRepository: ExternalSheetRefRepository,
+    private val sharedExpenseService: SharedExpenseService
 ) : EntryRecordService {
 
     override suspend fun createRecord(entryRecord: EntryHistory, sheetName: String, paymentMethod: PaymentMethod?): ExpenseEntryResponse? {
         var expenseEntryResponse: ExpenseEntryResponse? = null
         db.withTransaction {
-            entryHistoryRepository.saveEntryHistory(entryRecord)
+            val entryRecordId = entryHistoryRepository.saveEntryHistory(entryRecord)
+
+            // Generate shared expense entries if applicable
+            if (entryRecord.isShared == true) {
+                sharedExpenseService.createSharedExpenseEntries(entryRecord, entryRecordId)
+
+                if (entryRecord.paidBy != null && entryRecord.paidBy != 1L) {
+                    return@withTransaction
+                }
+            }
 
             val yearValue = entryRecord.date.year
             val spreadsheetId = externalSheetRefRepository.findExternalSheetRefByYear(yearValue)?.sheetId!!
@@ -84,8 +95,17 @@ class EntryRecordServiceImpl @Inject constructor(
 
     override suspend fun deleteRecord(entryRecord: EntryHistory) {
         db.withTransaction {
-            val spreadsheetId = externalSheetRefRepository.findExternalSheetRefByYear(entryRecord.date.year)?.sheetId!!
+            if (entryRecord.isShared == true) {
+                sharedExpenseService.deleteSharedExpenseEntries(entryRecord)
+            }
+
             entryHistoryRepository.deleteEntryHistory(entryRecord)
+
+            if (entryRecord.isShared == true && entryRecord.paidBy != null && entryRecord.paidBy != 1L) {
+                return@withTransaction
+            }
+
+            val spreadsheetId = externalSheetRefRepository.findExternalSheetRefByYear(entryRecord.date.year)?.sheetId!!
             val subcategory = subcategoryRepository.findSubcategoryById(entryRecord.subcategoryId)
             val currentBalance =
                 subcategoryMonthlyBalanceRepository.findBalanceBySubcategoryIdAndPeriod(
