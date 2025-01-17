@@ -75,16 +75,19 @@ class ExpenseEntryViewModel @Inject constructor(
                 paymentMethodId = paymentMethod?.uid,
                 date = formatDateFromString(selectedDate)
                     .atTime(LocalTime.now().hour, LocalTime.now().minute, LocalTime.now().second),
-                paidBy = if (isPaidByMe) 1L else 2L
+                paidBy = if (isPaidByMe) 1L else 2L,
+                isSettled = if (isShared) false else null
             )
 
-            val expenseEntryResponse : ExpenseEntryResponse = entryRecordService.createRecord(entryHistory, sheet, paymentMethod)!!
+            val expenseEntryResponse : ExpenseEntryResponse? = entryRecordService.createRecord(entryHistory, sheet, paymentMethod)
 
-            _expenseEntryResponse.tryEmit(expenseEntryResponse).also {
-                getEntryHistory(categoryType, expenseSubCategory.id)
-                getMonthlyBalance(categoryType, expenseSubCategory.id)
-                _isSaving.tryEmit(false)
+            if (expenseEntryResponse != null) {
+                _expenseEntryResponse.tryEmit(expenseEntryResponse)
             }
+
+            getEntryHistory(categoryType, expenseSubCategory.id)
+            getMonthlyBalance(categoryType, expenseSubCategory.id)
+            _isSaving.tryEmit(false)
         }
     }
 
