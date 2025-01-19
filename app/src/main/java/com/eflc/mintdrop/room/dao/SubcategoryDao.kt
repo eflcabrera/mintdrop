@@ -32,6 +32,12 @@ interface SubcategoryDao {
     """)
     fun getSubcategoryByExternalIdAndCategoryType(categoryType: EntryType, externalId: String): Subcategory
 
-    @Query("SELECT * FROM subcategory ORDER BY last_entry_on DESC LIMIT :limit")
+    @Query("""
+        SELECT sub.* FROM subcategory sub
+        JOIN category cat ON cat.uid = sub.category_id
+        WHERE cat.type = "EXPENSE"
+        ORDER BY sub.last_entry_on DESC LIMIT :limit
+    """)
+    @Transaction
     fun getLastXSubcategoriesOrderedByLastEntry(limit: Int): List<SubcategoryAndSubcategoryRow>
 }
