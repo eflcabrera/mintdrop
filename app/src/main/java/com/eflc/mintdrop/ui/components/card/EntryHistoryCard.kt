@@ -28,6 +28,8 @@ import com.eflc.mintdrop.R
 import com.eflc.mintdrop.room.dao.entity.EntryHistory
 import com.eflc.mintdrop.room.dao.entity.PaymentMethod
 import com.eflc.mintdrop.room.dao.entity.PaymentMethodType
+import com.eflc.mintdrop.room.dao.entity.SharedExpenseEntryDetail
+import com.eflc.mintdrop.utils.Constants.MY_USER_ID
 import com.eflc.mintdrop.utils.FormatUtils.Companion.formatAsCurrency
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -35,13 +37,15 @@ import java.time.format.DateTimeFormatter
 @Composable
 fun EntryHistoryCard(
     modifier: Modifier,
-    entryHistory: EntryHistory,
-    paymentMethods: List<PaymentMethod>?
+    entryRecord: EntryHistory,
+    paymentMethods: List<PaymentMethod>? = listOf(),
+    sharedExpenseDetails: List<SharedExpenseEntryDetail>? = listOf()
 ) {
-    val description = entryHistory.description.ifBlank { "???" }
-    val date = entryHistory.date.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
-    val amount = formatAsCurrency(entryHistory.amount)
-    val paymentMethod = paymentMethods?.find { it.uid == entryHistory.paymentMethodId }
+    val description = entryRecord.description.ifBlank { "???" }
+    val date = entryRecord.date.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
+    val amount = formatAsCurrency(entryRecord.amount)
+    val paymentMethod = paymentMethods?.find { it.uid == entryRecord.paymentMethodId }
+    val colorSharedGreen = Color(54, 180, 103)
 
     return Card(
         shape = MaterialTheme.shapes.extraSmall,
@@ -78,12 +82,13 @@ fun EntryHistoryCard(
                     .fillMaxHeight()
             ) {
                 Text(
-                    text = "$ $amount",
+                    text = amount,
                     fontWeight = FontWeight.Bold
                 )
                 Row(
                     horizontalArrangement = Arrangement.End,
-                    modifier = Modifier.width(50.dp)
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.width(125.dp)
                 ) {
                     if (paymentMethod?.type == PaymentMethodType.CREDIT_CARD) {
                         Image(
@@ -93,17 +98,41 @@ fun EntryHistoryCard(
                             modifier = Modifier.size(20.dp)
                         )
                     }
-                    if (entryHistory.isShared == true) {
-                        val colorTint = if ((entryHistory.isSettled == null) || entryHistory.isSettled)
+                    if (entryRecord.isShared == true) {
+                        val hasSharedExpenseDetails = !sharedExpenseDetails.isNullOrEmpty()
+                        val colorTint = if ((entryRecord.isSettled == null) || entryRecord.isSettled == true)
                             Color.Gray
                         else
-                            Color(54, 180, 103)
-                        Image(
-                            painter = painterResource(id = R.drawable.hearts_svgrepo_com),
-                            colorFilter = ColorFilter.tint(color = colorTint),
-                            contentDescription = "shared expense icon",
-                            modifier = Modifier.size(20.dp)
-                        )
+                            colorSharedGreen
+
+                        if (hasSharedExpenseDetails) {
+                            val myDetail = sharedExpenseDetails?.find { it.userId == MY_USER_ID }!!
+                            val theirDetail = sharedExpenseDetails.filter { it.userId != MY_USER_ID }
+                            var split: Double
+                            var color: Color
+                            if (MY_USER_ID != entryRecord.paidBy) {
+                                split = myDetail.split.times(-1)
+                                color = Color.Gray
+                            } else {
+                                split = theirDetail.sumOf { it.split }
+                                color = colorSharedGreen
+                            }
+
+                            Text(
+                                text = "(${if (split < 0.0) "" else "+ "}${formatAsCurrency(split)})",
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = 12.sp,
+                                color = color,
+                                modifier = Modifier.padding(start = 5.dp)
+                            )
+                        } else {
+                            Image(
+                                painter = painterResource(id = R.drawable.hearts_svgrepo_com),
+                                colorFilter = ColorFilter.tint(color = colorTint),
+                                contentDescription = "shared expense icon",
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
                     }
                 }
             }
@@ -115,7 +144,7 @@ fun EntryHistoryCard(
 @Composable
 fun EntryHistoryCardPreview() {
     EntryHistoryCard(modifier = Modifier.width(320.dp),
-        entryHistory = EntryHistory(
+        entryRecord = EntryHistory(
             subcategoryId = 1L,
             date = LocalDateTime.now(),
             description = "Imp. a los ingresos personales",
@@ -123,8 +152,23 @@ fun EntryHistoryCardPreview() {
             lastModified = LocalDateTime.now(),
             isShared = true,
             paymentMethodId = 1,
-            isSettled = false
+            isSettled = false,
+            paidBy = 1L
         ),
-        paymentMethods = listOf(PaymentMethod(1, "Crédito", PaymentMethodType.CREDIT_CARD))
+        paymentMethods = listOf(PaymentMethod(1, "Crédito", PaymentMethodType.CREDIT_CARD)),
+        sharedExpenseDetails = listOf(
+            SharedExpenseEntryDetail(
+                entryRecordId = 1L,
+                userId = 1L,
+                sharedExpenseConfigurationId = 1L,
+                split = 41260.15
+            ),
+            SharedExpenseEntryDetail(
+                entryRecordId = 1L,
+                userId = 2L,
+                sharedExpenseConfigurationId = 1L,
+                split = 50000.00
+            )
+        )
     )
 }

@@ -17,9 +17,11 @@ import com.eflc.mintdrop.room.JulepDatabase
 import com.eflc.mintdrop.room.dao.entity.EntryHistory
 import com.eflc.mintdrop.room.dao.entity.PaymentMethod
 import com.eflc.mintdrop.room.dao.entity.SubcategoryMonthlyBalance
+import com.eflc.mintdrop.room.dao.entity.relationship.EntryRecordAndSharedExpenseDetails
 import com.eflc.mintdrop.service.record.EntryRecordService
 import com.eflc.mintdrop.service.shared.SharedExpenseService
 import com.eflc.mintdrop.utils.Constants
+import com.eflc.mintdrop.utils.Constants.MY_USER_ID
 import java.time.LocalDate
 import java.time.LocalDateTime
 import javax.inject.Inject
@@ -45,7 +47,7 @@ class EntryRecordServiceImpl @Inject constructor(
             if (entryRecord.isShared == true) {
                 sharedExpenseService.createSharedExpenseEntries(entryRecord, entryRecordId)
 
-                if (entryRecord.paidBy != null && entryRecord.paidBy != 1L) {
+                if (entryRecord.paidBy != null && entryRecord.paidBy != MY_USER_ID) {
                     return@withTransaction
                 }
             }
@@ -101,7 +103,7 @@ class EntryRecordServiceImpl @Inject constructor(
 
             entryHistoryRepository.deleteEntryHistory(entryRecord)
 
-            if (entryRecord.isShared == true && entryRecord.paidBy != null && entryRecord.paidBy != 1L) {
+            if (entryRecord.isShared == true && entryRecord.paidBy != null && entryRecord.paidBy != MY_USER_ID) {
                 return@withTransaction
             }
 
@@ -135,8 +137,7 @@ class EntryRecordServiceImpl @Inject constructor(
         }
     }
 
-    override suspend fun calculateSharedExpenseBalance(): SharedExpenseBalanceData {
-        val pendingSharedExpenses = entryHistoryRepository.getPendingSharedExpenses()
+    override suspend fun calculateSharedExpenseBalance(pendingSharedExpenses: List<EntryRecordAndSharedExpenseDetails>): SharedExpenseBalanceData {
         val sharedExpenseSplits: MutableList<SharedExpenseSplit> = ArrayList()
         val sharedExpenseBalanceData = SharedExpenseBalanceData(0.0, sharedExpenseSplits)
 
@@ -162,6 +163,10 @@ class EntryRecordServiceImpl @Inject constructor(
             }
         }
         return sharedExpenseBalanceData
+    }
+
+    override suspend fun getPendingSharedExpenses(): List<EntryRecordAndSharedExpenseDetails> {
+        return entryHistoryRepository.getPendingSharedExpenses()
     }
 
     private fun buildExpenseEntryRequest(

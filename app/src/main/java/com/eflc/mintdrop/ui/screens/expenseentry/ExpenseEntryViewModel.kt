@@ -14,6 +14,8 @@ import com.eflc.mintdrop.room.dao.entity.PaymentMethod
 import com.eflc.mintdrop.room.dao.entity.SubcategoryMonthlyBalance
 import com.eflc.mintdrop.service.record.EntryRecordService
 import com.eflc.mintdrop.utils.Constants
+import com.eflc.mintdrop.utils.Constants.MY_USER_ID
+import com.eflc.mintdrop.utils.Constants.THEIR_USER_ID
 import com.eflc.mintdrop.utils.FormatUtils.Companion.formatDateFromString
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineScope
@@ -75,7 +77,7 @@ class ExpenseEntryViewModel @Inject constructor(
                 paymentMethodId = paymentMethod?.uid,
                 date = formatDateFromString(selectedDate)
                     .atTime(LocalTime.now().hour, LocalTime.now().minute, LocalTime.now().second),
-                paidBy = if (isPaidByMe) 1L else 2L,
+                paidBy = if (isPaidByMe) MY_USER_ID else THEIR_USER_ID,
                 isSettled = if (isShared) false else null
             )
 

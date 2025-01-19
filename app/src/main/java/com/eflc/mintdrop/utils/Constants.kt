@@ -8,4 +8,6 @@ object Constants {
     const val INSTALLMENTS_SHEET_NAME = "Cuotas"
     const val PAYMENT_METHOD_VISA = "VISA"
     const val PAYMENT_METHOD_MASTER_CARD = "MASTER"
+    const val MY_USER_ID = 1L
+    const val THEIR_USER_ID = 2L
 }

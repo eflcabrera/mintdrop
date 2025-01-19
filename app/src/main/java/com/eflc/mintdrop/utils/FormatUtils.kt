@@ -1,5 +1,6 @@
 package com.eflc.mintdrop.utils
 
+import java.math.RoundingMode
 import java.text.NumberFormat
 import java.text.SimpleDateFormat
 import java.time.Instant
@@ -8,13 +9,16 @@ import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.util.Date
 import java.util.Locale
+import kotlin.math.absoluteValue
 
 class FormatUtils {
     companion object {
         fun formatAsCurrency(amount: Double): String {
             val numberFormat: NumberFormat = NumberFormat.getNumberInstance(Locale.GERMAN)
+            val sign = if (amount < 0.0) "–" else ""
             numberFormat.maximumFractionDigits = 2
-            return numberFormat.format(amount)
+            numberFormat.roundingMode = RoundingMode.HALF_UP
+            return "$sign $ ${numberFormat.format(amount.absoluteValue)}"
         }
 
         fun convertMillisToStringDate(millis: Long): String {

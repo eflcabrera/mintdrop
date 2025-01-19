@@ -106,7 +106,7 @@ fun ExpenseEntryScreen(
             modifier = Modifier.padding(bottom = 32.dp)
         )
         Text(
-            text = "Total del mes: $ ${FormatUtils.formatAsCurrency(monthlyBalance.balance)}",
+            text = "Total del mes: ${FormatUtils.formatAsCurrency(monthlyBalance.balance)}",
             fontWeight = FontWeight.Light,
             modifier = Modifier.padding(bottom = 16.dp)
         )

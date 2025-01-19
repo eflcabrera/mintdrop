@@ -26,7 +26,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.eflc.mintdrop.ui.components.card.EntryHistoryCard
 import com.eflc.mintdrop.utils.Constants
+import com.eflc.mintdrop.utils.Constants.MY_USER_ID
 import com.eflc.mintdrop.utils.FormatUtils
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
@@ -40,8 +42,9 @@ fun SharedExpensesScreen(navComposable: NavController) {
     })
 
     val sharedExpenseBalance by sharedExpensesViewModel.sharedExpenseBalanceData.collectAsState()
+    val sharedExpenses by sharedExpensesViewModel.sharedExpenses.collectAsState()
 
-    val myUserSplit = sharedExpenseBalance.splits.find { it.userId == 1L }
+    val myUserSplit = sharedExpenseBalance.splits.find { it.userId == MY_USER_ID }
     var currentBalance = 0.0
     myUserSplit?.let {
         currentBalance = myUserSplit.paid.minus(myUserSplit.owed)
@@ -66,7 +69,7 @@ fun SharedExpensesScreen(navComposable: NavController) {
                     verticalArrangement = Arrangement.Center
                 ) {
                     Text(
-                        text = "Balance actual: $ ${FormatUtils.formatAsCurrency(currentBalance)}",
+                        text = "Balance actual: ${FormatUtils.formatAsCurrency(currentBalance)}",
                         fontWeight = FontWeight.Light,
                         modifier = Modifier.padding(bottom = 16.dp)
                     )
@@ -78,6 +81,16 @@ fun SharedExpensesScreen(navComposable: NavController) {
             }
         }
     ) {
-
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(bottom = 100.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+        ) {
+            sharedExpenses.forEach {
+                EntryHistoryCard(Modifier, it.entryRecord, sharedExpenseDetails = it.sharedExpenseDetails)
+            }
+        }
     }
 }

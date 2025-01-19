@@ -6,6 +6,7 @@ import com.eflc.mintdrop.room.JulepDatabase
 import com.eflc.mintdrop.room.dao.entity.EntryHistory
 import com.eflc.mintdrop.room.dao.entity.SharedExpenseConfigType
 import com.eflc.mintdrop.room.dao.entity.SharedExpenseEntryDetail
+import com.eflc.mintdrop.room.dao.entity.relationship.EntryRecordAndSharedExpenseDetails
 import com.eflc.mintdrop.room.dao.entity.relationship.SharedExpenseConfigurationAndDetails
 import com.eflc.mintdrop.service.shared.SharedExpenseService
 import javax.inject.Inject
@@ -42,6 +43,14 @@ class SharedExpenseServiceImpl @Inject constructor(
 
     override suspend fun deleteSharedExpenseEntries(sharedEntryRecord: EntryHistory) {
         sharedExpenseRepository.deleteSharedExpenseEntryDetailsByEntryRecordId(sharedEntryRecord.uid)
+    }
+
+    override suspend fun settleBalance(pendingSharedExpenses: List<EntryRecordAndSharedExpenseDetails>) {
+        db.withTransaction {
+            pendingSharedExpenses.forEach {
+
+            }
+        }
     }
 
     // Move this to a strategy pattern

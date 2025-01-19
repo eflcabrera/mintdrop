@@ -68,7 +68,7 @@ fun IncomeScreen(navComposable: NavController) {
                 verticalArrangement = Arrangement.Center
             ) {
                 Text(
-                    text = "Total del mes: $ ${FormatUtils.formatAsCurrency(monthlyBalance)}",
+                    text = "Total del mes: ${FormatUtils.formatAsCurrency(monthlyBalance)}",
                     fontWeight = FontWeight.Light,
                     modifier = Modifier.padding(bottom = 16.dp)
                 )

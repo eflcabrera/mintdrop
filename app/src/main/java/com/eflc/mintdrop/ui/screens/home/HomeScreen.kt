@@ -68,7 +68,7 @@ fun HomeScreen(navController: NavHostController = rememberNavController()) {
             onDismissRequest = { },
             onConfirmation = { homeViewModel.deleteEntry() },
             dialogTitle = "Deshacer último",
-            dialogText = "¿Revertir gasto \"${lastEntry.description}\" en \"${lastEntry.categoryName}\" por $${formatAsCurrency(lastEntry.amount)}?",
+            dialogText = "¿Revertir gasto \"${lastEntry.description}\" en \"${lastEntry.categoryName}\" por ${formatAsCurrency(lastEntry.amount)}?",
             isVisible = shouldShowUndoDialog
         )
     }
