@@ -37,7 +37,7 @@ import androidx.navigation.compose.rememberNavController
 import com.eflc.mintdrop.R
 import com.eflc.mintdrop.graph.HomeNavigationGraph
 import com.eflc.mintdrop.navigation.AppScreens
-import com.eflc.mintdrop.ui.components.dialog.UndoEntryDialog
+import com.eflc.mintdrop.ui.components.dialog.ConfirmationEntryDialog
 import com.eflc.mintdrop.utils.Constants
 import com.eflc.mintdrop.utils.FormatUtils.Companion.formatAsCurrency
 
@@ -64,12 +64,13 @@ fun HomeScreen(navController: NavHostController = rememberNavController()) {
     val shouldShowUndoDialog = remember { mutableStateOf(false) }
 
     if (shouldShowUndoDialog.value) {
-        UndoEntryDialog(
+        ConfirmationEntryDialog(
             onDismissRequest = { },
             onConfirmation = { homeViewModel.deleteEntry() },
             dialogTitle = "Deshacer último",
             dialogText = "¿Revertir gasto \"${lastEntry.description}\" en \"${lastEntry.categoryName}\" por ${formatAsCurrency(lastEntry.amount)}?",
-            isVisible = shouldShowUndoDialog
+            isVisible = shouldShowUndoDialog,
+            confirmLabel = "Deshacer"
         )
     }
 

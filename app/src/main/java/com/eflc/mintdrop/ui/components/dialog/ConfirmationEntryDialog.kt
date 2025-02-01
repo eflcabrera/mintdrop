@@ -1,7 +1,6 @@
 package com.eflc.mintdrop.ui.components.dialog
 
 import android.annotation.SuppressLint
-import android.content.res.Resources.Theme
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
@@ -18,12 +17,14 @@ import androidx.compose.ui.unit.sp
 import com.eflc.mintdrop.R
 
 @Composable
-fun UndoEntryDialog(
+fun ConfirmationEntryDialog(
     onDismissRequest: () -> Unit,
     onConfirmation: () -> Unit,
     dialogTitle: String,
     dialogText: String,
-    isVisible: MutableState<Boolean>
+    isVisible: MutableState<Boolean>,
+    confirmLabel: String = "OK",
+    cancelLabel: String = "Cancelar"
 ) {
     if (isVisible.value) {
         AlertDialog(
@@ -51,7 +52,7 @@ fun UndoEntryDialog(
                         isVisible.value = false
                     }
                 ) {
-                    Text("Deshacer")
+                    Text(confirmLabel)
                 }
             },
             dismissButton = {
@@ -61,7 +62,7 @@ fun UndoEntryDialog(
                         isVisible.value = false
                     }
                 ) {
-                    Text("Cancelar")
+                    Text(cancelLabel)
                 }
             }
         )
@@ -72,7 +73,7 @@ fun UndoEntryDialog(
 @Preview(showBackground = true)
 @Composable
 fun UndoEntryDialogPreview() {
-    UndoEntryDialog(
+    ConfirmationEntryDialog(
         onDismissRequest = { /*TODO*/ },
         onConfirmation = { /*TODO*/ },
         dialogTitle = "Deshacer última entrada",

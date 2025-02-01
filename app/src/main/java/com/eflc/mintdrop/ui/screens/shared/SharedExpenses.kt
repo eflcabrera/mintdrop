@@ -7,9 +7,12 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -20,16 +23,21 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.eflc.mintdrop.ui.components.card.EntryHistoryCard
+import com.eflc.mintdrop.ui.components.dialog.ConfirmationEntryDialog
 import com.eflc.mintdrop.utils.Constants
 import com.eflc.mintdrop.utils.Constants.MY_USER_ID
 import com.eflc.mintdrop.utils.FormatUtils
+import kotlin.math.absoluteValue
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @OptIn(ExperimentalMaterial3Api::class)
@@ -43,6 +51,7 @@ fun SharedExpensesScreen(navComposable: NavController) {
 
     val sharedExpenseBalance by sharedExpensesViewModel.sharedExpenseBalanceData.collectAsState()
     val sharedExpenses by sharedExpensesViewModel.sharedExpenses.collectAsState()
+    val shouldShowSettlementDialog = remember { mutableStateOf(false) }
 
     val myUserSplit = sharedExpenseBalance.splits.find { it.userId == MY_USER_ID }
     var currentBalance = 0.0
@@ -50,6 +59,18 @@ fun SharedExpensesScreen(navComposable: NavController) {
         currentBalance = myUserSplit.paid.minus(myUserSplit.owed)
     }
     val sheet = Constants.SHARED_EXPENSE_SHEET_NAME
+    val resultOperationCaption = if (currentBalance < 0.0) "debitarán" else "acreditarán"
+
+    if (shouldShowSettlementDialog.value) {
+        ConfirmationEntryDialog(
+            onDismissRequest = { },
+            onConfirmation = { },
+            dialogTitle = "Saldar cuentas",
+            dialogText = "¿Estás seguro de querer saldar estos gastos?\nSe te $resultOperationCaption ${FormatUtils.formatAsCurrency(currentBalance.absoluteValue)}",
+            isVisible = shouldShowSettlementDialog,
+            confirmLabel = "Saldar"
+        )
+    }
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -65,7 +86,7 @@ fun SharedExpensesScreen(navComposable: NavController) {
                         .fillMaxWidth()
                         .padding(start = 40.dp, end = 40.dp, top = 70.dp)
                         .verticalScroll(rememberScrollState()),
-                    horizontalAlignment = Alignment.Start,
+                    horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center
                 ) {
                     Text(
@@ -77,6 +98,18 @@ fun SharedExpensesScreen(navComposable: NavController) {
                         thickness = 1.dp,
                         modifier = Modifier.padding(bottom = 16.dp)
                     )
+                    Button(
+                        onClick = {
+                            shouldShowSettlementDialog.value = true
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(160, 221, 230)),
+                        enabled = currentBalance != 0.0,
+                        modifier = Modifier
+                            .padding(bottom = 10.dp)
+                            .height(50.dp)
+                    ) {
+                        Text(text = "Saldar cuentas", color = Color.Black)
+                    }
                 }
             }
         }
@@ -84,7 +117,8 @@ fun SharedExpensesScreen(navComposable: NavController) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(bottom = 100.dp),
+                .padding(bottom = 90.dp, top = 190.dp)
+                .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
         ) {

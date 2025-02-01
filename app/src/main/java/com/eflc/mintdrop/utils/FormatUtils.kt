@@ -15,7 +15,7 @@ class FormatUtils {
     companion object {
         fun formatAsCurrency(amount: Double): String {
             val numberFormat: NumberFormat = NumberFormat.getNumberInstance(Locale.GERMAN)
-            val sign = if (amount < 0.0) "–" else ""
+            val sign = if (amount < 0.0) "-" else ""
             numberFormat.maximumFractionDigits = 2
             numberFormat.roundingMode = RoundingMode.HALF_UP
             return "$sign $ ${numberFormat.format(amount.absoluteValue)}"
