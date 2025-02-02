@@ -41,5 +41,5 @@ data class SharedExpenseEntryDetail(
     @ColumnInfo(name = "split")
     val split: Double,
     @ColumnInfo(name = "settlement_id")
-    val settlementId: Long? = null,
+    var settlementId: Long? = null,
 )

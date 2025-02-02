@@ -11,4 +11,5 @@ interface EntryRecordService {
     suspend fun deleteRecord(entryRecord: EntryHistory)
     suspend fun calculateSharedExpenseBalance(pendingSharedExpenses: List<EntryRecordAndSharedExpenseDetails>): SharedExpenseBalanceData
     suspend fun getPendingSharedExpenses(): List<EntryRecordAndSharedExpenseDetails>
+    suspend fun settleSharedExpenseBalance(balance: Double, pendingSharedExpenses: List<EntryRecordAndSharedExpenseDetails>): ExpenseEntryResponse?
 }

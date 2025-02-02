@@ -8,5 +8,5 @@ interface SharedExpenseService {
 
     suspend fun createSharedExpenseEntries(sharedEntryRecord: EntryHistory, entryRecordId: Long): List<SharedExpenseEntryDetail>
     suspend fun deleteSharedExpenseEntries(sharedEntryRecord: EntryHistory)
-    suspend fun settleBalance(pendingSharedExpenses: List<EntryRecordAndSharedExpenseDetails>)
+    suspend fun createBalanceSettlement(balance: Double, pendingSharedExpenses: List<EntryRecordAndSharedExpenseDetails>): EntryHistory
 }

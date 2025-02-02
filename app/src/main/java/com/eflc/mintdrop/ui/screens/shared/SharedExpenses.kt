@@ -9,11 +9,13 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
@@ -51,6 +53,7 @@ fun SharedExpensesScreen(navComposable: NavController) {
 
     val sharedExpenseBalance by sharedExpensesViewModel.sharedExpenseBalanceData.collectAsState()
     val sharedExpenses by sharedExpensesViewModel.sharedExpenses.collectAsState()
+    val isSaving by sharedExpensesViewModel.isSaving.collectAsState()
     val shouldShowSettlementDialog = remember { mutableStateOf(false) }
 
     val myUserSplit = sharedExpenseBalance.splits.find { it.userId == MY_USER_ID }
@@ -64,7 +67,7 @@ fun SharedExpensesScreen(navComposable: NavController) {
     if (shouldShowSettlementDialog.value) {
         ConfirmationEntryDialog(
             onDismissRequest = { },
-            onConfirmation = { },
+            onConfirmation = { sharedExpensesViewModel.settleExpenses(currentBalance, sharedExpenses) },
             dialogTitle = "Saldar cuentas",
             dialogText = "¿Estás seguro de querer saldar estos gastos?\nSe te $resultOperationCaption ${FormatUtils.formatAsCurrency(currentBalance.absoluteValue)}",
             isVisible = shouldShowSettlementDialog,
@@ -122,8 +125,17 @@ fun SharedExpensesScreen(navComposable: NavController) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
         ) {
-            sharedExpenses.forEach {
-                EntryHistoryCard(Modifier, it.entryRecord, sharedExpenseDetails = it.sharedExpenseDetails)
+            if (isSaving) {
+                CircularProgressIndicator(
+                    modifier = Modifier
+                        .width(35.dp)
+                        .padding(bottom = 14.dp),
+                    color = MaterialTheme.colorScheme.secondary
+                )
+            } else {
+                sharedExpenses.forEach {
+                    EntryHistoryCard(Modifier, it.entryRecord, sharedExpenseDetails = it.sharedExpenseDetails)
+                }
             }
         }
     }

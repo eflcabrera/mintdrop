@@ -53,11 +53,13 @@ object ServiceModule {
     @Singleton
     fun provideSharedExpenseService(
         db: JulepDatabase,
-        sharedExpenseRepository: SharedExpenseRepository
+        sharedExpenseRepository: SharedExpenseRepository,
+        entryHistoryRepository: EntryHistoryRepository
     ): SharedExpenseService {
         return SharedExpenseServiceImpl(
             db,
-            sharedExpenseRepository
+            sharedExpenseRepository,
+            entryHistoryRepository
         )
     }
 }

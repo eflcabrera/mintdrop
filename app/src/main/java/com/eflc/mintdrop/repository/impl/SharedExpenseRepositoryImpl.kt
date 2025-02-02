@@ -6,6 +6,7 @@ import com.eflc.mintdrop.room.dao.SharedExpenseConfigurationDetailDao
 import com.eflc.mintdrop.room.dao.SharedExpenseEntryDetailDao
 import com.eflc.mintdrop.room.dao.SharedExpenseSettlementDao
 import com.eflc.mintdrop.room.dao.entity.SharedExpenseEntryDetail
+import com.eflc.mintdrop.room.dao.entity.SharedExpenseSettlement
 import com.eflc.mintdrop.room.dao.entity.relationship.SharedExpenseConfigurationAndDetails
 import java.time.LocalDateTime
 import javax.inject.Inject
@@ -26,5 +27,9 @@ class SharedExpenseRepositoryImpl @Inject constructor(
 
     override suspend fun deleteSharedExpenseEntryDetailsByEntryRecordId(entryRecordId: Long) {
         entryDetailDao.deleteAllByEntryRecordId(entryRecordId)
+    }
+
+    override suspend fun saveSharedExpenseSettlement(sharedExpenseSettlement: SharedExpenseSettlement): Long {
+        return settlementDao.saveSharedExpenseSettlement(sharedExpenseSettlement)
     }
 }

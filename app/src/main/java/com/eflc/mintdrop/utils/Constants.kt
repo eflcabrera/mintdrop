@@ -10,4 +10,6 @@ object Constants {
     const val PAYMENT_METHOD_MASTER_CARD = "MASTER"
     const val MY_USER_ID = 1L
     const val THEIR_USER_ID = 2L
+    const val DEFAULT_SETTLE_DEBIT_SUBCAT = 29L
+    const val DEFAULT_SETTLE_CREDIT_SUBCAT = 120L
 }

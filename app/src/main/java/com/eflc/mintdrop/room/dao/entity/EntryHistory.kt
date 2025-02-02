@@ -36,7 +36,7 @@ data class EntryHistory(
     @ColumnInfo(name = "created_on")
     val createdOn: LocalDateTime = LocalDateTime.now(),
     @ColumnInfo(name = "last_modified")
-    val lastModified: LocalDateTime?,
+    var lastModified: LocalDateTime?,
     @ColumnInfo(name = "is_shared")
     val isShared: Boolean? = false,
     @ColumnInfo(name = "payment_method_id")

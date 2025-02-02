@@ -169,6 +169,14 @@ class EntryRecordServiceImpl @Inject constructor(
         return entryHistoryRepository.getPendingSharedExpenses()
     }
 
+    override suspend fun settleSharedExpenseBalance(balance: Double, pendingSharedExpenses: List<EntryRecordAndSharedExpenseDetails>): ExpenseEntryResponse? {
+        return db.withTransaction {
+            val sheetName = if (balance > 0.0) Constants.INCOME_SHEET_NAME else Constants.EXPENSE_SHEET_NAME
+            val settlementEntry = sharedExpenseService.createBalanceSettlement(balance, pendingSharedExpenses)
+            return@withTransaction createRecord(settlementEntry, sheetName, null)
+        }
+    }
+
     private fun buildExpenseEntryRequest(
         row: Int,
         amount: Double,
