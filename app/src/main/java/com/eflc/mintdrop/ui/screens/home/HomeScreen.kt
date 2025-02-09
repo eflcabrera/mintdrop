@@ -7,10 +7,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddCircle
-import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material.icons.outlined.AddCircle
-import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material.icons.outlined.Favorite
 import androidx.compose.material.icons.outlined.ShoppingCart
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -37,7 +37,7 @@ import androidx.navigation.compose.rememberNavController
 import com.eflc.mintdrop.R
 import com.eflc.mintdrop.graph.HomeNavigationGraph
 import com.eflc.mintdrop.navigation.AppScreens
-import com.eflc.mintdrop.ui.components.dialog.UndoEntryDialog
+import com.eflc.mintdrop.ui.components.dialog.ConfirmationEntryDialog
 import com.eflc.mintdrop.utils.Constants
 import com.eflc.mintdrop.utils.FormatUtils.Companion.formatAsCurrency
 
@@ -54,8 +54,8 @@ data class BottomNavigationItem(
 fun HomeScreen(navController: NavHostController = rememberNavController()) {
     val homeViewModel: HomeViewModel = hiltViewModel()
     val items = listOf(
-        BottomNavigationItem(Constants.SETTINGS_SHEET_NAME, AppScreens.ExpenseScreen.route, Icons.Filled.Settings, Icons.Outlined.Settings),
         BottomNavigationItem(Constants.EXPENSE_SHEET_NAME, AppScreens.ExpenseScreen.route, Icons.Filled.ShoppingCart, Icons.Outlined.ShoppingCart),
+        BottomNavigationItem(Constants.SHARED_EXPENSE_SHEET_NAME, AppScreens.SharedExpensesScreen.route, Icons.Filled.Favorite, Icons.Outlined.Favorite),
         BottomNavigationItem(Constants.INCOME_SHEET_NAME, AppScreens.IncomeScreen.route, Icons.Filled.AddCircle, Icons.Outlined.AddCircle)
     )
 
@@ -64,12 +64,13 @@ fun HomeScreen(navController: NavHostController = rememberNavController()) {
     val shouldShowUndoDialog = remember { mutableStateOf(false) }
 
     if (shouldShowUndoDialog.value) {
-        UndoEntryDialog(
+        ConfirmationEntryDialog(
             onDismissRequest = { },
             onConfirmation = { homeViewModel.deleteEntry() },
             dialogTitle = "Deshacer último",
-            dialogText = "¿Revertir gasto \"${lastEntry.description}\" en \"${lastEntry.categoryName}\" por $${formatAsCurrency(lastEntry.amount)}?",
-            isVisible = shouldShowUndoDialog
+            dialogText = "¿Revertir gasto \"${lastEntry.description}\" en \"${lastEntry.categoryName}\" por ${formatAsCurrency(lastEntry.amount)}?",
+            isVisible = shouldShowUndoDialog,
+            confirmLabel = "Deshacer"
         )
     }
 

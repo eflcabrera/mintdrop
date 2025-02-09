@@ -14,6 +14,8 @@ import com.eflc.mintdrop.room.dao.entity.PaymentMethod
 import com.eflc.mintdrop.room.dao.entity.SubcategoryMonthlyBalance
 import com.eflc.mintdrop.service.record.EntryRecordService
 import com.eflc.mintdrop.utils.Constants
+import com.eflc.mintdrop.utils.Constants.MY_USER_ID
+import com.eflc.mintdrop.utils.Constants.THEIR_USER_ID
 import com.eflc.mintdrop.utils.FormatUtils.Companion.formatDateFromString
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineScope
@@ -56,7 +58,8 @@ class ExpenseEntryViewModel @Inject constructor(
                     isShared: Boolean,
                     expenseSubCategory: ExpenseSubCategory,
                     paymentMethod: PaymentMethod?,
-                    selectedDate: String
+                    selectedDate: String,
+                    isPaidByMe: Boolean
     ) {
         coroutineScope.launch {
             _isSaving.tryEmit(true)
@@ -73,16 +76,20 @@ class ExpenseEntryViewModel @Inject constructor(
                 isShared = isShared,
                 paymentMethodId = paymentMethod?.uid,
                 date = formatDateFromString(selectedDate)
-                    .atTime(LocalTime.now().hour, LocalTime.now().minute, LocalTime.now().second)
+                    .atTime(LocalTime.now().hour, LocalTime.now().minute, LocalTime.now().second),
+                paidBy = if (isPaidByMe) MY_USER_ID else THEIR_USER_ID,
+                isSettled = if (isShared) false else null
             )
 
-            val expenseEntryResponse : ExpenseEntryResponse = entryRecordService.createRecord(entryHistory, sheet, paymentMethod)!!
+            val expenseEntryResponse : ExpenseEntryResponse? = entryRecordService.createRecord(entryHistory, sheet, paymentMethod)
 
-            _expenseEntryResponse.tryEmit(expenseEntryResponse).also {
-                getEntryHistory(categoryType, expenseSubCategory.id)
-                getMonthlyBalance(categoryType, expenseSubCategory.id)
-                _isSaving.tryEmit(false)
+            if (expenseEntryResponse != null) {
+                _expenseEntryResponse.tryEmit(expenseEntryResponse)
             }
+
+            getEntryHistory(categoryType, expenseSubCategory.id)
+            getMonthlyBalance(categoryType, expenseSubCategory.id)
+            _isSaving.tryEmit(false)
         }
     }
 

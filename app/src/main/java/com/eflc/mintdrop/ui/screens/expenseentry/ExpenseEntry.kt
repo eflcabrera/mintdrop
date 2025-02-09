@@ -80,6 +80,7 @@ fun ExpenseEntryScreen(
         var amountInput by remember { mutableStateOf("") }
         var descriptionInput by remember { mutableStateOf("") }
         var isSharedExpenseInput by remember { mutableStateOf(false) }
+        var isPaidByMeInput by remember { mutableStateOf(true) }
         var paymentMethodInput by remember { mutableStateOf<PaymentMethod?>(null) }
         var expenseSaved by remember { mutableStateOf(false) }
         var showDatePicker by remember { mutableStateOf(false) }
@@ -89,6 +90,7 @@ fun ExpenseEntryScreen(
         val amount = amountInput.toDoubleOrNull() ?: 0.0
         val description = descriptionInput
         val isSharedExpense = isSharedExpenseInput
+        val isPaidByMe = isPaidByMeInput
         val selectedPaymentMethod = paymentMethodInput
         val selectedDate = datePickerState.selectedDateMillis?.let {
             convertMillisToStringDate(it.plus(1000 * 60 * 60 * 5))
@@ -104,7 +106,7 @@ fun ExpenseEntryScreen(
             modifier = Modifier.padding(bottom = 32.dp)
         )
         Text(
-            text = "Total del mes: $ ${FormatUtils.formatAsCurrency(monthlyBalance.balance)}",
+            text = "Total del mes: ${FormatUtils.formatAsCurrency(monthlyBalance.balance)}",
             fontWeight = FontWeight.Light,
             modifier = Modifier.padding(bottom = 16.dp)
         )
@@ -168,6 +170,15 @@ fun ExpenseEntryScreen(
                 modifier = Modifier
                     .clickable { isSharedExpenseInput = !isSharedExpenseInput }
             )
+            if (isSharedExpenseInput) {
+                LabeledCheckbox(
+                    label = "Pagado por mí",
+                    isChecked = isPaidByMeInput,
+                    onCheckedChange = { isPaidByMeInput = it },
+                    modifier = Modifier
+                        .clickable { isPaidByMeInput = !isPaidByMeInput }
+                )
+            }
         }
 
         Column(
@@ -187,11 +198,13 @@ fun ExpenseEntryScreen(
                         expenseSubCategory,
                         selectedPaymentMethod,
                         selectedDate,
+                        isPaidByMe
                     )
                     amountInput = ""
                     descriptionInput = ""
                     isSharedExpenseInput = false
                     expenseSaved = true
+                    isPaidByMeInput = true
                 },
                 colors = ButtonDefaults.buttonColors(containerColor = Color(160, 221, 230)),
                 enabled = amountInput.isNotBlank() && amountInput.isNotEmpty(),
@@ -202,20 +215,7 @@ fun ExpenseEntryScreen(
                 Text(text = "Guardar $saveButtonLabel", color = Color.Black)
             }
         }
-        /*
-        if (expenseSaved) {
-            Text(
-                text = "Monto anterior: ${expenseEntryResponse.previousAmount}",
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(bottom = 20.dp)
-            )
-            Text(
-                text = "Monto final: ${expenseEntryResponse.finalAmount}",
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(bottom = 20.dp)
-            )
-        }
-        */
+
         Divider(
             thickness = 1.dp,
             modifier = Modifier.padding(bottom = 16.dp)

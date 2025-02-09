@@ -3,8 +3,10 @@ package com.eflc.mintdrop.room.dao
 import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Query
+import androidx.room.Transaction
 import androidx.room.Upsert
 import com.eflc.mintdrop.room.dao.entity.EntryHistory
+import com.eflc.mintdrop.room.dao.entity.relationship.EntryRecordAndSharedExpenseDetails
 
 @Dao
 interface EntryHistoryDao {
@@ -31,4 +33,8 @@ interface EntryHistoryDao {
         LIMIT 1
     """)
     fun getTopEntryOrderByDateDesc(): EntryHistory
+
+    @Query("SELECT * FROM entry_history WHERE is_settled = 0")
+    @Transaction
+    fun getEntryRecordsWithUnsettledSharedExpenses(): List<EntryRecordAndSharedExpenseDetails>
 }
