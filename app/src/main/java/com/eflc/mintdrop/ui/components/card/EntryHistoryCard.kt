@@ -46,6 +46,7 @@ fun EntryHistoryCard(
     val amount = formatAsCurrency(entryRecord.amount)
     val paymentMethod = paymentMethods?.find { it.uid == entryRecord.paymentMethodId }
     val colorSharedGreen = Color(54, 180, 103)
+    val hasSharedExpenseDetails = !sharedExpenseDetails.isNullOrEmpty()
 
     return Card(
         shape = MaterialTheme.shapes.extraSmall,
@@ -56,7 +57,7 @@ fun EntryHistoryCard(
         Row(
             horizontalArrangement = Arrangement.SpaceBetween,
             modifier = Modifier
-                .height(70.dp)
+                .height(100.dp)
                 .padding(12.dp)
                 .fillMaxWidth()
         ) {
@@ -99,7 +100,6 @@ fun EntryHistoryCard(
                         )
                     }
                     if (entryRecord.isShared == true) {
-                        val hasSharedExpenseDetails = !sharedExpenseDetails.isNullOrEmpty()
                         val colorTint = if ((entryRecord.isSettled == null) || entryRecord.isSettled == true)
                             Color.Gray
                         else
