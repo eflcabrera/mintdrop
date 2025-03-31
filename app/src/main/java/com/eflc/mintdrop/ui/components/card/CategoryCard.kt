@@ -4,7 +4,9 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -20,9 +22,13 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.eflc.mintdrop.R
+import com.eflc.mintdrop.models.ExpenseCategory
+import com.eflc.mintdrop.models.ExpenseSubCategory
 import com.eflc.mintdrop.models.GenericCategory
 
 @Composable
@@ -44,19 +50,21 @@ fun CategoryCard(
             )
             .clickable { onClick(category) }
     ) {
-        Column(
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally,
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Start,
             modifier = Modifier
-                .height(140.dp)
+                .height(80.dp)
                 .fillMaxWidth()
                 .background(color = Color.White)
         ) {
+            Box(modifier = Modifier.fillMaxHeight().width(10.dp))
             iconMap?.get(category.name)?.let { painterResource(id = it) }?.let {
                 Image(
                     painter = it,
                     contentDescription = "android image",
-                    modifier = Modifier.size(65.dp)
+                    modifier = Modifier
+                        .size(30.dp)
                 )
             }
             Text(
@@ -68,4 +76,33 @@ fun CategoryCard(
             )
         }
     }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun CategoryCardPreview() {
+    val iconMap = mapOf(
+        "Deuda" to R.drawable.apartment,
+        "Educación" to R.drawable.graduation_hat,
+        "Ocio" to R.drawable.dice,
+        "Gastos diarios" to R.drawable.cart,
+        "Regalos" to R.drawable.gift,
+        "Salud/médicos" to R.drawable.heart_pulse,
+        "Vivienda" to R.drawable.home,
+        "Seguros" to R.drawable.lock,
+        "Mascotas" to R.drawable.paw,
+        "Tecnología" to R.drawable.laptop_phone,
+        "Transporte" to R.drawable.car,
+        "Viajes" to R.drawable.map,
+        "Servicios básicos" to R.drawable.inbox,
+        "Ahorro o Inversión" to R.drawable.star,
+        "Impuestos" to R.drawable.poop
+    )
+    CategoryCard(
+        iconMap = iconMap,
+        category = ExpenseCategory("1", "Gastos diarios",
+            listOf(ExpenseSubCategory("1", "subcat", 1))),
+        onClick = {},
+        modifier = Modifier
+    )
 }

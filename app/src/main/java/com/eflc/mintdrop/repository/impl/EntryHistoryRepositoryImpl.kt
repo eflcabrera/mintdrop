@@ -17,8 +17,8 @@ class EntryHistoryRepositoryImpl @Inject constructor(
         return dao.getEntryHistory(entryHistoryId)
     }
 
-    override suspend fun findEntryHistoryBySubcategoryId(subcategoryId: Long): List<EntryHistory> {
-        return dao.getEntryHistoryBySubcategoryIdOrderByDate(subcategoryId)
+    override suspend fun findEntryHistoryBySubcategoryId(subcategoryId: Long, maxResults: Int): List<EntryHistory> {
+        return dao.getEntryHistoryBySubcategoryIdOrderByDate(subcategoryId, maxResults)
     }
 
     override suspend fun findLastEntry(): EntryHistory {

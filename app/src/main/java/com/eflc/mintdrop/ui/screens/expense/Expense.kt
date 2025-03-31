@@ -92,7 +92,7 @@ fun ExpenseScreen(navComposable: NavController) {
                 LazyVerticalGrid(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(250.dp),
+                        .height(210.dp),
                     columns = GridCells.Fixed(3),
                     verticalArrangement = Arrangement.Top,
                     contentPadding = PaddingValues(
@@ -103,7 +103,7 @@ fun ExpenseScreen(navComposable: NavController) {
                 ) {
                     items(lastUsedSubcategories) { subCategory: ExpenseSubCategory ->
                         ExpenseSubCategoryCard(
-                            modifier = Modifier.height(120.dp),
+                            modifier = Modifier.height(80.dp),
                             subCategory = subCategory,
                             onClick = {
                                 val subcategoryJson = Uri.encode(Gson().toJson(it))
@@ -137,7 +137,7 @@ fun ExpenseScreen(navComposable: NavController) {
                 .fillMaxSize(),
             columns = GridCells.Adaptive(140.dp),
             verticalArrangement = Arrangement.Center,
-            contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 260.dp, bottom = 140.dp)
+            contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 230.dp, bottom = 140.dp)
         ) {
             items(categories) { category: ExpenseCategory ->
                 ExpenseCategoryCard(

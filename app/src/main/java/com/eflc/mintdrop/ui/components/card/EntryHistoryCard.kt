@@ -57,7 +57,7 @@ fun EntryHistoryCard(
         Row(
             horizontalArrangement = Arrangement.SpaceBetween,
             modifier = Modifier
-                .height(100.dp)
+                .height(80.dp)
                 .padding(12.dp)
                 .fillMaxWidth()
         ) {
