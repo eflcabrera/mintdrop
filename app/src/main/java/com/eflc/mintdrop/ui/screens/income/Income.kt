@@ -33,6 +33,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.eflc.mintdrop.R
 import com.eflc.mintdrop.models.ExpenseCategory
 import com.eflc.mintdrop.navigation.AppScreens
 import com.eflc.mintdrop.ui.components.card.CategoryCard
@@ -120,6 +121,9 @@ fun ExpenseCategoryCard(
     category: ExpenseCategory,
     onClick: (category: ExpenseCategory) -> Unit
 ) {
-    val iconMap = mapOf("none" to 1)
+    val iconMap = mapOf(
+        "Sueldo" to R.drawable.money_bag_svgrepo_com,
+        "Otros" to R.drawable.notes_svgrepo_com
+    )
     CategoryCard(iconMap = iconMap, category = category, onClick = { onClick(category) }, modifier = Modifier)
 }
