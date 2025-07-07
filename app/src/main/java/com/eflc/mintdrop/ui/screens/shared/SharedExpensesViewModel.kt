@@ -13,7 +13,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import openPdfFile
 import sharePdfFile
 import java.io.File
 import javax.inject.Inject
@@ -37,6 +36,9 @@ class SharedExpensesViewModel @Inject constructor(
     private val _pdfError = MutableStateFlow<String?>(null)
     val pdfError: StateFlow<String?> = _pdfError
 
+    private val _pdfMessage = MutableStateFlow<String?>(null)
+    val pdfMessage: StateFlow<String?> = _pdfMessage
+
     fun getSharedExpenseBalance() {
         viewModelScope.launch(Dispatchers.IO) {
             val pendingSharedExpenses = entryHistoryService.getPendingSharedExpenses()
@@ -55,9 +57,12 @@ class SharedExpensesViewModel @Inject constructor(
         }
     }
 
-    fun generatePdf(context: Context) {
+    fun generateAndSharePdf(context: Context) {
         viewModelScope.launch {
             try {
+                _pdfError.value = null
+                _pdfMessage.value = null
+                
                 // Usa tus flows existentes para obtener los datos actuales
                 val expensesWithDetails = sharedExpenses.value
                 val balance = sharedExpenseBalanceData.value.splits
@@ -67,7 +72,8 @@ class SharedExpensesViewModel @Inject constructor(
                 val file = generateSharedExpensesPdf(context, expensesWithDetails, balance)
                 if (file != null) {
                     _pdfFile.value = file
-                    _pdfError.value = null
+                    _pdfMessage.value = "PDF generado exitosamente"
+                    sharePdfFile(context, file)
                 } else {
                     _pdfFile.value = null
                     _pdfError.value = "No se pudo generar el PDF"
@@ -79,15 +85,5 @@ class SharedExpensesViewModel @Inject constructor(
         }
     }
 
-    fun openPdf(context: Context) {
-        _pdfFile.value?.let { file ->
-            openPdfFile(context, file)
-        }
-    }
 
-    fun sharePdf(context: Context) {
-        _pdfFile.value?.let { file ->
-            sharePdfFile(context, file)
-        }
-    }
 }

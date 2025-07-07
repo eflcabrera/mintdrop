@@ -120,6 +120,12 @@ fun generateSharedExpensesPdf(
 
 fun openPdfFile(context: Context, file: File) {
     try {
+        // Verificar que el archivo existe
+        if (!file.exists()) {
+            android.util.Log.e("PdfUtils", "El archivo PDF no existe: ${file.absolutePath}")
+            return
+        }
+        
         val uri = FileProvider.getUriForFile(
             context,
             "${context.packageName}.fileprovider",
@@ -131,16 +137,29 @@ fun openPdfFile(context: Context, file: File) {
             flags = Intent.FLAG_GRANT_READ_URI_PERMISSION
         }
         
-        if (intent.resolveActivity(context.packageManager) != null) {
+        // Verificar si hay apps que puedan manejar PDFs
+        val resolveInfo = context.packageManager.resolveActivity(intent, 0)
+        if (resolveInfo != null) {
             context.startActivity(intent)
+            android.util.Log.d("PdfUtils", "PDF abierto exitosamente")
+        } else {
+            android.util.Log.e("PdfUtils", "No hay apps instaladas que puedan abrir PDFs")
+            // Opcional: mostrar un Toast o Snackbar al usuario
         }
     } catch (e: Exception) {
+        android.util.Log.e("PdfUtils", "Error al abrir PDF: ${e.message}")
         e.printStackTrace()
     }
 }
 
 fun sharePdfFile(context: Context, file: File) {
     try {
+        // Verificar que el archivo existe
+        if (!file.exists()) {
+            android.util.Log.e("PdfUtils", "El archivo PDF no existe: ${file.absolutePath}")
+            return
+        }
+        
         val uri = FileProvider.getUriForFile(
             context,
             "${context.packageName}.fileprovider",
@@ -156,7 +175,9 @@ fun sharePdfFile(context: Context, file: File) {
         }
         
         context.startActivity(Intent.createChooser(intent, "Compartir PDF"))
+        android.util.Log.d("PdfUtils", "PDF compartido exitosamente")
     } catch (e: Exception) {
+        android.util.Log.e("PdfUtils", "Error al compartir PDF: ${e.message}")
         e.printStackTrace()
     }
 } 

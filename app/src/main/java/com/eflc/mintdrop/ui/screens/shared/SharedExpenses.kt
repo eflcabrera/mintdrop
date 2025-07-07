@@ -5,7 +5,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -58,8 +57,8 @@ fun SharedExpensesScreen(navComposable: NavController) {
     val sharedExpenses by sharedExpensesViewModel.sharedExpenses.collectAsState()
     val isSaving by sharedExpensesViewModel.isSaving.collectAsState()
     val shouldShowSettlementDialog = remember { mutableStateOf(false) }
-    val pdfFile by sharedExpensesViewModel.pdfFile.collectAsState()
     val pdfError by sharedExpensesViewModel.pdfError.collectAsState()
+    val pdfMessage by sharedExpensesViewModel.pdfMessage.collectAsState()
     val context = LocalContext.current
 
     val myUserSplit = sharedExpenseBalance.splits.find { it.userId == MY_USER_ID }
@@ -120,55 +119,32 @@ fun SharedExpensesScreen(navComposable: NavController) {
                         Text(text = "Saldar cuentas", color = Color.Black)
                     }
                     
-                    // Botón para generar PDF
+                    // Botón para generar y compartir PDF
                     Button(
                         onClick = {
-                            sharedExpensesViewModel.generatePdf(context)
+                            sharedExpensesViewModel.generateAndSharePdf(context)
                         },
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(76, 175, 80)),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(54, 180, 103)),
                         modifier = Modifier
                             .padding(bottom = 10.dp)
                             .height(50.dp)
                     ) {
-                        Text(text = "Generar PDF", color = Color.White)
-                    }
-                    
-                    // Botones para abrir y compartir PDF (solo si existe)
-                    pdfFile?.let { file ->
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(10.dp),
-                            modifier = Modifier.padding(bottom = 10.dp)
-                        ) {
-                            Button(
-                                onClick = {
-                                    sharedExpensesViewModel.openPdf(context)
-                                },
-                                colors = ButtonDefaults.buttonColors(containerColor = Color(33, 150, 243)),
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .height(50.dp)
-                            ) {
-                                Text(text = "Abrir PDF", color = Color.White)
-                            }
-                            
-                            Button(
-                                onClick = {
-                                    sharedExpensesViewModel.sharePdf(context)
-                                },
-                                colors = ButtonDefaults.buttonColors(containerColor = Color(255, 152, 0)),
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .height(50.dp)
-                            ) {
-                                Text(text = "Compartir", color = Color.White)
-                            }
-                        }
+                        Text(text = "Generar y Compartir PDF", color = Color.Black)
                     }
 
                     pdfError?.let { error ->
                         Text(
                             text = error,
                             color = Color.Red,
+                            fontSize = 12.sp,
+                            modifier = Modifier.padding(top = 5.dp)
+                        )
+                    }
+                    
+                    pdfMessage?.let { message ->
+                        Text(
+                            text = message,
+                            color = Color.Green,
                             fontSize = 12.sp,
                             modifier = Modifier.padding(top = 5.dp)
                         )
