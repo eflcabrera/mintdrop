@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -30,8 +31,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.eflc.mintdrop.ui.components.card.EntryHistoryCard
@@ -55,6 +58,9 @@ fun SharedExpensesScreen(navComposable: NavController) {
     val sharedExpenses by sharedExpensesViewModel.sharedExpenses.collectAsState()
     val isSaving by sharedExpensesViewModel.isSaving.collectAsState()
     val shouldShowSettlementDialog = remember { mutableStateOf(false) }
+    val pdfFile by sharedExpensesViewModel.pdfFile.collectAsState()
+    val pdfError by sharedExpensesViewModel.pdfError.collectAsState()
+    val context = LocalContext.current
 
     val myUserSplit = sharedExpenseBalance.splits.find { it.userId == MY_USER_ID }
     var currentBalance = 0.0
@@ -112,6 +118,60 @@ fun SharedExpensesScreen(navComposable: NavController) {
                             .height(50.dp)
                     ) {
                         Text(text = "Saldar cuentas", color = Color.Black)
+                    }
+                    
+                    // Botón para generar PDF
+                    Button(
+                        onClick = {
+                            sharedExpensesViewModel.generatePdf(context)
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(76, 175, 80)),
+                        modifier = Modifier
+                            .padding(bottom = 10.dp)
+                            .height(50.dp)
+                    ) {
+                        Text(text = "Generar PDF", color = Color.White)
+                    }
+                    
+                    // Botones para abrir y compartir PDF (solo si existe)
+                    pdfFile?.let { file ->
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                            modifier = Modifier.padding(bottom = 10.dp)
+                        ) {
+                            Button(
+                                onClick = {
+                                    sharedExpensesViewModel.openPdf(context)
+                                },
+                                colors = ButtonDefaults.buttonColors(containerColor = Color(33, 150, 243)),
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(50.dp)
+                            ) {
+                                Text(text = "Abrir PDF", color = Color.White)
+                            }
+                            
+                            Button(
+                                onClick = {
+                                    sharedExpensesViewModel.sharePdf(context)
+                                },
+                                colors = ButtonDefaults.buttonColors(containerColor = Color(255, 152, 0)),
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(50.dp)
+                            ) {
+                                Text(text = "Compartir", color = Color.White)
+                            }
+                        }
+                    }
+
+                    pdfError?.let { error ->
+                        Text(
+                            text = error,
+                            color = Color.Red,
+                            fontSize = 12.sp,
+                            modifier = Modifier.padding(top = 5.dp)
+                        )
                     }
                 }
             }
