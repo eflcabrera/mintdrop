@@ -92,7 +92,7 @@ fun ExpenseScreen(navComposable: NavController) {
                 LazyVerticalGrid(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(250.dp),
+                        .height(190.dp),
                     columns = GridCells.Fixed(3),
                     verticalArrangement = Arrangement.Top,
                     contentPadding = PaddingValues(
@@ -103,7 +103,7 @@ fun ExpenseScreen(navComposable: NavController) {
                 ) {
                     items(lastUsedSubcategories) { subCategory: ExpenseSubCategory ->
                         ExpenseSubCategoryCard(
-                            modifier = Modifier.height(120.dp),
+                            modifier = Modifier.height(60.dp),
                             subCategory = subCategory,
                             onClick = {
                                 val subcategoryJson = Uri.encode(Gson().toJson(it))
@@ -127,7 +127,7 @@ fun ExpenseScreen(navComposable: NavController) {
                     modifier = Modifier
                         .fillMaxSize()
                         .wrapContentSize(align = Alignment.Center)
-                        .padding(top = 100.dp)
+                        .padding(top = 200.dp)
                 )
             }
         }
@@ -137,7 +137,7 @@ fun ExpenseScreen(navComposable: NavController) {
                 .fillMaxSize(),
             columns = GridCells.Adaptive(140.dp),
             verticalArrangement = Arrangement.Center,
-            contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 260.dp, bottom = 140.dp)
+            contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 200.dp, bottom = 140.dp)
         ) {
             items(categories) { category: ExpenseCategory ->
                 ExpenseCategoryCard(
@@ -160,21 +160,21 @@ fun ExpenseCategoryCard(
     onClick: (category: ExpenseCategory) -> Unit
 ) {
     val iconMap = mapOf(
-        "Deuda" to R.drawable.apartment,
-        "Educación" to R.drawable.graduation_hat,
-        "Ocio" to R.drawable.dice,
-        "Gastos diarios" to R.drawable.cart,
-        "Regalos" to R.drawable.gift,
-        "Salud/médicos" to R.drawable.heart_pulse,
-        "Vivienda" to R.drawable.home,
-        "Seguros" to R.drawable.lock,
-        "Mascotas" to R.drawable.paw,
-        "Tecnología" to R.drawable.laptop_phone,
-        "Transporte" to R.drawable.car,
-        "Viajes" to R.drawable.map,
-        "Servicios básicos" to R.drawable.inbox,
-        "Ahorro o Inversión" to R.drawable.star,
-        "Impuestos" to R.drawable.poop
+        "Deuda" to R.drawable.buildings_svgrepo_com,
+        "Educación" to R.drawable.square_academic_cap_svgrepo_com,
+        "Ocio" to R.drawable.gamepad_svgrepo_com,
+        "Gastos diarios" to R.drawable.cart_3_svgrepo_com,
+        "Regalos" to R.drawable.gift_svgrepo_com,
+        "Salud/médicos" to R.drawable.heart_svgrepo_com,
+        "Vivienda" to R.drawable.home_1_svgrepo_com,
+        "Seguros" to R.drawable.shield_svgrepo_com,
+        "Mascotas" to R.drawable.cat_svgrepo_com,
+        "Tecnología" to R.drawable.cpu_svgrepo_com,
+        "Transporte" to R.drawable.bus_svgrepo_com,
+        "Viajes" to R.drawable.suitcase_tag_svgrepo_com,
+        "Servicios básicos" to R.drawable.lightbulb_bolt_svgrepo_com,
+        "Ahorro o Inversión" to R.drawable.star_shine_svgrepo_com,
+        "Impuestos" to R.drawable.star_1_svgrepo_com
     )
     CategoryCard(iconMap = iconMap, category = category, onClick = { onClick(category) }, modifier = modifier)
 }

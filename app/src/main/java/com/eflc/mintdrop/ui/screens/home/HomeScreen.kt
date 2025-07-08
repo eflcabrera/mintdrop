@@ -62,6 +62,8 @@ fun HomeScreen(navController: NavHostController = rememberNavController()) {
     val lastEntry by homeViewModel.lastEntryData.collectAsState()
 
     val shouldShowUndoDialog = remember { mutableStateOf(false) }
+    var (recordRouter, setRecordRouter) = remember { mutableStateOf("") }
+    var toolFloatingButtonIcon by remember { mutableStateOf(0) }
 
     if (shouldShowUndoDialog.value) {
         ConfirmationEntryDialog(
@@ -89,8 +91,14 @@ fun HomeScreen(navController: NavHostController = rememberNavController()) {
                     contentColor = MaterialTheme.colorScheme.secondary,
                     modifier = Modifier.padding(8.dp)
                 ) {
+                    toolFloatingButtonIcon = if (recordRouter == AppScreens.SharedExpensesScreen.route) {
+                        R.drawable.settings_svgrepo_com
+                    } else {
+                        R.drawable.undo_left_svgrepo_com
+                    }
+
                     Icon(
-                        painter = painterResource(R.drawable.undo_left_svgrepo_com),
+                        painter = painterResource(toolFloatingButtonIcon),
                         "Undo last entry button"
                     )
                 }
@@ -99,7 +107,8 @@ fun HomeScreen(navController: NavHostController = rememberNavController()) {
         bottomBar = {
             BottomNavigationBar(
                 items = items,
-                navController = navController
+                navController = navController,
+                setRecordRouter
             )
         }
     ) {
@@ -110,7 +119,8 @@ fun HomeScreen(navController: NavHostController = rememberNavController()) {
 @Composable
 fun BottomNavigationBar(
     items: List<BottomNavigationItem>,
-    navController: NavHostController
+    navController: NavHostController,
+    setRecordRouter: (String) -> Unit
 ) {
     var selectedItemIndex by rememberSaveable {
         mutableStateOf(0)
@@ -122,6 +132,7 @@ fun BottomNavigationBar(
                 selected = selectedItemIndex == index,
                 onClick = {
                     selectedItemIndex = index
+                    setRecordRouter(item.route)
                     navController.navigate(item.route)
                 },
                 label = { Text(text = item.title) },

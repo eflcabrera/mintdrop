@@ -6,7 +6,7 @@ import com.eflc.mintdrop.room.dao.entity.relationship.EntryRecordAndSharedExpens
 interface EntryHistoryRepository {
     suspend fun saveEntryHistory(entryHistory: EntryHistory): Long
     suspend fun findEntryHistoryById(entryHistoryId: Long): EntryHistory
-    suspend fun findEntryHistoryBySubcategoryId(subcategoryId: Long): List<EntryHistory>
+    suspend fun findEntryHistoryBySubcategoryId(subcategoryId: Long, maxResults: Int = 50): List<EntryHistory>
     suspend fun findLastEntry(): EntryHistory
     suspend fun deleteEntryHistory(entryHistory: EntryHistory)
     suspend fun getPendingSharedExpenses(): List<EntryRecordAndSharedExpenseDetails>
