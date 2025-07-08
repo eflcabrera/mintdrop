@@ -156,7 +156,7 @@ fun SharedExpensesScreen(navComposable: NavController) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(bottom = 90.dp, top = 190.dp)
+                .padding(bottom = 90.dp, top = 270.dp)
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,

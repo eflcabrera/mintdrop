@@ -4,6 +4,8 @@ import android.graphics.Paint
 import android.graphics.pdf.PdfDocument
 import android.os.Environment
 import androidx.core.content.FileProvider
+import com.eflc.mintdrop.room.dao.entity.PaymentMethod
+import com.eflc.mintdrop.room.dao.entity.PaymentMethodType
 import com.eflc.mintdrop.room.dao.entity.relationship.EntryRecordAndSharedExpenseDetails
 import com.eflc.mintdrop.utils.Constants.MY_USER_ID
 import com.eflc.mintdrop.utils.FormatUtils
@@ -14,25 +16,27 @@ import java.time.format.DateTimeFormatter
 fun generateSharedExpensesPdf(
     context: Context,
     expensesWithDetails: List<EntryRecordAndSharedExpenseDetails>,
-    balance: Double
+    balance: Double,
+    paymentMethods: List<PaymentMethod> = emptyList()
 ): File? {
     val pageWidth = 595
     val pageHeight = 842
     val marginStart = 40f
     val marginEnd = 550f
-    val lineHeight = 20
+    val lineHeight = 16 // Más comprimido
     val maxY = 800
 
+    // Ajuste de columnas: más espacio para Descripción
     val columnDate = marginStart
-    val columnDescription = marginStart + 70f
-    val columnAmount = marginStart + 140f
-    val columnMyShare = marginStart + 210f
-    val columnTheirShare = marginStart + 280f
-    val columnPaidBy = marginStart + 350f
+    val columnDescription = marginStart + 60f  // Más espacio
+    val columnAmount = marginStart + 240f
+    val columnMyShare = marginStart + 310f
+    val columnTheirShare = marginStart + 380f
+    val columnPaidBy = marginStart + 450f
 
     val pdfDocument = PdfDocument()
     val paint = Paint()
-    val dateFormatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")
+    val dateFormatter = DateTimeFormatter.ofPattern("dd/MM") // Solo día y mes
     var pageNumber = 1
     var pageInfo = PdfDocument.PageInfo.Builder(pageWidth, pageHeight, pageNumber).create()
     var pdfPage = pdfDocument.startPage(pageInfo)
@@ -44,7 +48,7 @@ fun generateSharedExpensesPdf(
         paint.isFakeBoldText = true
         canvas.drawText("Gastos Compartidos", marginStart, y.toFloat(), paint)
         y += 40
-        paint.textSize = 11f  // Reducido para que quepan 6 columnas
+        paint.textSize = 11f
         paint.isFakeBoldText = true
         canvas.drawText("Fecha", columnDate, y.toFloat(), paint)
         canvas.drawText("Descripción", columnDescription, y.toFloat(), paint)
@@ -55,7 +59,7 @@ fun generateSharedExpensesPdf(
         y += 20
         paint.isFakeBoldText = false
         canvas.drawLine(marginStart, y.toFloat(), marginEnd, y.toFloat(), paint)
-        y += 15
+        y += 10
     }
 
     drawHeader()
@@ -75,22 +79,21 @@ fun generateSharedExpensesPdf(
         val sharedDetails = expenseWithDetails.sharedExpenseDetails
         
         val date = expense.date.format(dateFormatter)
-        val desc = expense.description.take(15)
+        val desc = expense.description.take(30) // Más espacio para descripción
         val amount = FormatUtils.formatAsCurrency(expense.amount)
-
         val myShare = sharedDetails.find { it.userId == MY_USER_ID }?.split ?: 0.0
         val theirShare = sharedDetails.find { it.userId != MY_USER_ID }?.split ?: 0.0
-        
-        // Determinar quién pagó
         val paidBy = when (expense.paidBy) {
             MY_USER_ID -> "Eze"
             else -> "Pau"
         }
-        
-        paint.textSize = 11f  // Reducido para que quepan 6 columnas
+        val paymentMethod = paymentMethods.find { it.uid == expense.paymentMethodId }
+        val isCreditCard = paymentMethod?.type == PaymentMethodType.CREDIT_CARD
+        paint.textSize = 11f
         paint.isFakeBoldText = false
         canvas.drawText(date, columnDate, y.toFloat(), paint)
-        canvas.drawText(desc, columnDescription, y.toFloat(), paint)
+        val descWithIcon = if (isCreditCard) "💳 $desc" else desc
+        canvas.drawText(descWithIcon, columnDescription, y.toFloat(), paint)
         canvas.drawText(amount, columnAmount, y.toFloat(), paint)
         canvas.drawText(FormatUtils.formatAsCurrency(myShare), columnMyShare, y.toFloat(), paint)
         canvas.drawText(FormatUtils.formatAsCurrency(theirShare), columnTheirShare, y.toFloat(), paint)
