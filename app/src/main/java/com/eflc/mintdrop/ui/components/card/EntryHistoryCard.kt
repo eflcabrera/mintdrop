@@ -1,6 +1,7 @@
 package com.eflc.mintdrop.ui.components.card
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -17,6 +18,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -39,7 +41,8 @@ fun EntryHistoryCard(
     modifier: Modifier,
     entryRecord: EntryHistory,
     paymentMethods: List<PaymentMethod>? = listOf(),
-    sharedExpenseDetails: List<SharedExpenseEntryDetail>? = listOf()
+    sharedExpenseDetails: List<SharedExpenseEntryDetail>? = listOf(),
+    onLongPress: (() -> Unit)? = null
 ) {
     val description = entryRecord.description.ifBlank { "???" }
     val date = entryRecord.date.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
@@ -53,6 +56,13 @@ fun EntryHistoryCard(
         modifier = modifier
             .padding(4.dp)
             .width(350.dp)
+            .pointerInput(Unit) {
+                detectTapGestures(
+                    onLongPress = {
+                        onLongPress?.invoke()
+                    }
+                )
+            }
     ) {
         Row(
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -169,6 +179,7 @@ fun EntryHistoryCardPreview() {
                 sharedExpenseConfigurationId = 1L,
                 split = 50000.00
             )
-        )
+        ),
+        onLongPress = { /* Preview no necesita funcionalidad */ }
     )
 }
