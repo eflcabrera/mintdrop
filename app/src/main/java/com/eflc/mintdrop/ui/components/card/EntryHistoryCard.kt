@@ -15,6 +15,9 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -44,12 +47,34 @@ fun EntryHistoryCard(
     sharedExpenseDetails: List<SharedExpenseEntryDetail>? = listOf(),
     onLongPress: (() -> Unit)? = null
 ) {
-    val description = entryRecord.description.ifBlank { "???" }
-    val date = entryRecord.date.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
-    val amount = formatAsCurrency(entryRecord.amount)
-    val paymentMethod = paymentMethods?.find { it.uid == entryRecord.paymentMethodId }
-    val colorSharedGreen = Color(54, 180, 103)
-    val hasSharedExpenseDetails = !sharedExpenseDetails.isNullOrEmpty()
+    // Valores memoizados para evitar recálculos en cada recomposición
+    val description by remember(entryRecord.description) {
+        derivedStateOf { entryRecord.description.ifBlank { "???" } }
+    }
+    
+    val formattedDate by remember(entryRecord.date) {
+        derivedStateOf { 
+            entryRecord.date.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
+        }
+    }
+    
+    val formattedAmount by remember(entryRecord.amount) {
+        derivedStateOf { formatAsCurrency(entryRecord.amount) }
+    }
+    
+    val paymentMethod by remember(entryRecord.paymentMethodId, paymentMethods) {
+        derivedStateOf { 
+            paymentMethods?.find { it.uid == entryRecord.paymentMethodId }
+        }
+    }
+    
+    val hasSharedExpenseDetails by remember(sharedExpenseDetails) {
+        derivedStateOf { !sharedExpenseDetails.isNullOrEmpty() }
+    }
+    
+    // Constantes memoizadas
+    val colorSharedGreen = remember { Color(54, 180, 103) }
+    val colorCreditCard = remember { Color(66, 135, 245) }
 
     return Card(
         shape = MaterialTheme.shapes.extraSmall,
@@ -84,7 +109,7 @@ fun EntryHistoryCard(
                     maxLines = 1,
                     modifier = Modifier.width(170.dp)
                 )
-                Text(text = date, fontSize = 12.sp)
+                Text(text = formattedDate, fontSize = 12.sp)
             }
             Column(
                 horizontalAlignment = Alignment.End,
@@ -93,7 +118,7 @@ fun EntryHistoryCard(
                     .fillMaxHeight()
             ) {
                 Text(
-                    text = amount,
+                    text = formattedAmount,
                     fontWeight = FontWeight.Bold
                 )
                 Row(
@@ -104,37 +129,53 @@ fun EntryHistoryCard(
                     if (paymentMethod?.type == PaymentMethodType.CREDIT_CARD) {
                         Image(
                             painter = painterResource(id = R.drawable.card_svgrepo_com),
-                            colorFilter = ColorFilter.tint(color = Color(66, 135, 245)),
+                            colorFilter = ColorFilter.tint(color = colorCreditCard),
                             contentDescription = "credit card payment icon",
                             modifier = Modifier.size(20.dp)
                         )
                     }
                     if (entryRecord.isShared == true) {
-                        val colorTint = if ((entryRecord.isSettled == null) || entryRecord.isSettled == true)
-                            Color.Gray
-                        else
-                            colorSharedGreen
+                        val colorTint by remember(entryRecord.isSettled) {
+                            derivedStateOf {
+                                if ((entryRecord.isSettled == null) || entryRecord.isSettled == true)
+                                    Color.Gray
+                                else
+                                    colorSharedGreen
+                            }
+                        }
 
                         if (hasSharedExpenseDetails) {
-                            val myDetail = sharedExpenseDetails?.find { it.userId == MY_USER_ID }!!
-                            val theirDetail = sharedExpenseDetails.filter { it.userId != MY_USER_ID }
-                            var split: Double
-                            var color: Color
-                            if (MY_USER_ID != entryRecord.paidBy) {
-                                split = myDetail.split.times(-1)
-                                color = Color.Gray
-                            } else {
-                                split = theirDetail.sumOf { it.split }
-                                color = colorSharedGreen
+                            val splitInfo by remember(sharedExpenseDetails, entryRecord.paidBy) {
+                                derivedStateOf {
+                                    val myDetail = sharedExpenseDetails?.find { it.userId == MY_USER_ID }
+                                    val theirDetail = sharedExpenseDetails?.filter { it.userId != MY_USER_ID } ?: emptyList()
+                                    
+                                    if (myDetail != null) {
+                                        if (MY_USER_ID != entryRecord.paidBy) {
+                                            val split = myDetail.split.times(-1)
+                                            val color = Color.Gray
+                                            Triple(split, color, true)
+                                        } else {
+                                            val split = theirDetail.sumOf { it.split }
+                                            val color = colorSharedGreen
+                                            Triple(split, color, true)
+                                        }
+                                    } else {
+                                        Triple(0.0, Color.Gray, false)
+                                    }
+                                }
                             }
-
-                            Text(
-                                text = "(${if (split < 0.0) "" else "+ "}${formatAsCurrency(split)})",
-                                fontWeight = FontWeight.SemiBold,
-                                fontSize = 12.sp,
-                                color = color,
-                                modifier = Modifier.padding(start = 5.dp)
-                            )
+                            
+                            if (splitInfo.third) {
+                                val (split, color, _) = splitInfo
+                                Text(
+                                    text = "(${if (split < 0.0) "" else "+ "}${formatAsCurrency(split)})",
+                                    fontWeight = FontWeight.SemiBold,
+                                    fontSize = 12.sp,
+                                    color = color,
+                                    modifier = Modifier.padding(start = 5.dp)
+                                )
+                            }
                         } else {
                             Image(
                                 painter = painterResource(id = R.drawable.hearts_svgrepo_com),
