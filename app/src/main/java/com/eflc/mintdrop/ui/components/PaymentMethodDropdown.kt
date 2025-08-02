@@ -1,5 +1,6 @@
 package com.eflc.mintdrop.ui.components
 
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.IntrinsicSize
@@ -39,6 +40,7 @@ fun PaymentMethodDropdown(
     paymentMethods: List<PaymentMethod?>,
     selectedValue: PaymentMethod?,
     onClick: (index: Int) -> Unit,
+    highlightAlpha: Float = 0f,
 ) {
     var expanded by remember { mutableStateOf(false) }
     Box(
@@ -52,7 +54,13 @@ fun PaymentMethodDropdown(
                 label = {
                     Text("Método de pago (opc.)")
                 },
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .border(
+                        width = (2 * highlightAlpha).dp,
+                        color = Color(54, 180, 103).copy(alpha = highlightAlpha),
+                        shape = MaterialTheme.shapes.small
+                    ),
                 value = selectedValue?.description ?: "",
                 onValueChange = {},
                 readOnly = true,
@@ -111,6 +119,7 @@ fun PaymentMethodDropdownPreview() {
         paymentMethods = paymentMethods,
         onClick = {
             index -> paymentMethodInput = if (index >= 0) paymentMethods[index] else null
-        }
+        },
+        highlightAlpha = 0f
     )
 }
