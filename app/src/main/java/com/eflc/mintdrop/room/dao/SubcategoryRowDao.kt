@@ -1,6 +1,7 @@
 package com.eflc.mintdrop.room.dao
 
 import androidx.room.Dao
+import androidx.room.Delete
 import androidx.room.Query
 import androidx.room.Upsert
 import com.eflc.mintdrop.room.dao.entity.SubcategoryRow
@@ -12,4 +13,7 @@ interface SubcategoryRowDao {
 
     @Query("SELECT * FROM subcategory_row WHERE subcategory_id = :subcategoryId LIMIT 1")
     fun findSubcategoryRowBySubcategoryId(subcategoryId: Long): SubcategoryRow
+
+    @Delete
+    suspend fun deleteSubcategoryRow(subcategoryRow: SubcategoryRow)
 }

@@ -12,4 +12,6 @@ interface SubcategoryRepository {
     suspend fun findSubcategoryWithEntryHistory(subcategoryId: Long): SubcategoryAndEntryHistory
     suspend fun findSubcategoryByExternalIdAndCategoryType(categoryType: EntryType, externalId: String): Subcategory
     suspend fun findLastSubcategoriesUsed(amount: Int): List<SubcategoryAndSubcategoryRow>
+    suspend fun deleteSubcategory(subcategory: Subcategory)
+    suspend fun updateSubcategoryName(subcategoryId: Long, newName: String)
 }

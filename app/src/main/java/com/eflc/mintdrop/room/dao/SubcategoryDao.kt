@@ -1,6 +1,7 @@
 package com.eflc.mintdrop.room.dao
 
 import androidx.room.Dao
+import androidx.room.Delete
 import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Upsert
@@ -40,4 +41,10 @@ interface SubcategoryDao {
     """)
     @Transaction
     fun getLastXSubcategoriesOrderedByLastEntry(limit: Int): List<SubcategoryAndSubcategoryRow>
+
+    @Delete
+    suspend fun deleteSubcategory(subcategory: Subcategory)
+
+    @Query("UPDATE subcategory SET name = :newName, last_modified = :lastModified WHERE uid = :subcategoryId")
+    suspend fun updateSubcategoryName(subcategoryId: Long, newName: String, lastModified: String)
 }
