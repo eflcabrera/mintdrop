@@ -19,6 +19,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -43,6 +44,20 @@ fun PaymentMethodDropdown(
     highlightAlpha: Float = 0f,
 ) {
     var expanded by remember { mutableStateOf(false) }
+    
+    // Valores memoizados para evitar recálculos
+    val selectedValueDescription by remember(selectedValue) {
+        derivedStateOf { selectedValue?.description ?: "" }
+    }
+    
+    val highlightColor by remember(highlightAlpha) {
+        derivedStateOf { Color(54, 180, 103).copy(alpha = highlightAlpha) }
+    }
+    
+    val borderWidth by remember(highlightAlpha) {
+        derivedStateOf { (2 * highlightAlpha).dp }
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -57,11 +72,11 @@ fun PaymentMethodDropdown(
                 modifier = Modifier
                     .fillMaxWidth()
                     .border(
-                        width = (2 * highlightAlpha).dp,
-                        color = Color(54, 180, 103).copy(alpha = highlightAlpha),
+                        width = borderWidth,
+                        color = highlightColor,
                         shape = MaterialTheme.shapes.small
                     ),
-                value = selectedValue?.description ?: "",
+                value = selectedValueDescription,
                 onValueChange = {},
                 readOnly = true,
                 leadingIcon = {

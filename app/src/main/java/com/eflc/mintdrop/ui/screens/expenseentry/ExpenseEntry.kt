@@ -29,6 +29,7 @@ import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -44,7 +45,6 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.eflc.mintdrop.models.EntryType
 import com.eflc.mintdrop.models.ExpenseSubCategory
-import com.eflc.mintdrop.room.dao.entity.EntryHistory
 import com.eflc.mintdrop.room.dao.entity.PaymentMethod
 import com.eflc.mintdrop.ui.components.EntryDatePicker
 import com.eflc.mintdrop.ui.components.LabeledCheckbox
@@ -56,6 +56,21 @@ import com.eflc.mintdrop.utils.FormatUtils.Companion.convertMillisToStringDate
 import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.LocalDate
+
+// Estado local para evitar recomposiciones innecesarias
+data class ExpenseEntryFormState(
+    val amountInput: String = "",
+    val descriptionInput: String = "",
+    val isSharedExpenseInput: Boolean = false,
+    val isPaidByMeInput: Boolean = true,
+    val paymentMethodInput: PaymentMethod? = null,
+    val expenseSaved: Boolean = false,
+    val showDatePicker: Boolean = false,
+    val showCopiedMessage: Boolean = false,
+    val highlightAmount: Boolean = false,
+    val highlightDescription: Boolean = false,
+    val highlightPaymentMethod: Boolean = false
+)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -69,6 +84,9 @@ fun ExpenseEntryScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val scrollState = rememberScrollState()
 
+    // Estado del formulario memoizado
+    var formState by remember { mutableStateOf(ExpenseEntryFormState()) }
+
     LaunchedEffect(key1 = true, block = {
         expenseEntryViewModel.getEntryHistory(categoryType, expenseSubCategory.id)
         expenseEntryViewModel.getPaymentMethods()
@@ -78,6 +96,64 @@ fun ExpenseEntryScreen(
     val history by expenseEntryViewModel.entryHistoryList.collectAsState()
     val paymentMethods by expenseEntryViewModel.paymentMethodList.collectAsState()
     val monthlyBalance by expenseEntryViewModel.monthlyBalance.collectAsState()
+    val isSaving by expenseEntryViewModel.isSaving.collectAsState()
+
+    // Valores derivados memoizados para evitar recálculos
+    val amount by remember(formState.amountInput) {
+        derivedStateOf { formState.amountInput.toDoubleOrNull() ?: 0.0 }
+    }
+
+    val description by remember(formState.descriptionInput) {
+        derivedStateOf { formState.descriptionInput }
+    }
+
+    val isSharedExpense by remember(formState.isSharedExpenseInput) {
+        derivedStateOf { formState.isSharedExpenseInput }
+    }
+
+    val isPaidByMe by remember(formState.isPaidByMeInput) {
+        derivedStateOf { formState.isPaidByMeInput }
+    }
+
+    val selectedPaymentMethod by remember(formState.paymentMethodInput) {
+        derivedStateOf { formState.paymentMethodInput }
+    }
+
+    val datePickerState = rememberDatePickerState()
+    val scope = rememberCoroutineScope()
+
+    // Animaciones optimizadas - solo se ejecutan cuando cambian los valores
+    val amountHighlightAlpha by animateFloatAsState(
+        targetValue = if (formState.highlightAmount) 1f else 0f,
+        animationSpec = tween(durationMillis = 300),
+        label = "amountHighlight"
+    )
+    val descriptionHighlightAlpha by animateFloatAsState(
+        targetValue = if (formState.highlightDescription) 1f else 0f,
+        animationSpec = tween(durationMillis = 300),
+        label = "descriptionHighlight"
+    )
+    val paymentMethodHighlightAlpha by animateFloatAsState(
+        targetValue = if (formState.highlightPaymentMethod) 1f else 0f,
+        animationSpec = tween(durationMillis = 300),
+        label = "paymentMethodHighlight"
+    )
+
+    val selectedDate by remember(datePickerState.selectedDateMillis) {
+        derivedStateOf {
+            datePickerState.selectedDateMillis?.let {
+                convertMillisToStringDate(it.plus(1000 * 60 * 60 * 5))
+            } ?: convertMillisToStringDate(Instant.now().toEpochMilli())
+        }
+    }
+
+    val saveButtonLabel by remember(isExpense) {
+        derivedStateOf { if (isExpense) "gasto" else "ingreso" }
+    }
+
+    val isFormValid by remember(formState.amountInput) {
+        derivedStateOf { formState.amountInput.isNotBlank() && formState.amountInput.isNotEmpty() }
+    }
 
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) }
@@ -91,52 +167,19 @@ fun ExpenseEntryScreen(
             horizontalAlignment = Alignment.Start,
             verticalArrangement = Arrangement.Center
         ) {
-            var amountInput by remember { mutableStateOf("") }
-            var descriptionInput by remember { mutableStateOf("") }
-            var isSharedExpenseInput by remember { mutableStateOf(false) }
-            var isPaidByMeInput by remember { mutableStateOf(true) }
-            var paymentMethodInput by remember { mutableStateOf<PaymentMethod?>(null) }
-            var expenseSaved by remember { mutableStateOf(false) }
-            var showDatePicker by remember { mutableStateOf(false) }
-            var showCopiedMessage by remember { mutableStateOf(false) }
-            var highlightDescription by remember { mutableStateOf(false) }
-            var highlightPaymentMethod by remember { mutableStateOf(false) }
-            val datePickerState = rememberDatePickerState()
-            val scope = rememberCoroutineScope()
-            
-            // Animaciones para el highlight
-            val descriptionHighlightAlpha by animateFloatAsState(
-                targetValue = if (highlightDescription) 1f else 0f,
-                animationSpec = tween(durationMillis = 300),
-                label = "descriptionHighlight"
-            )
-            val paymentMethodHighlightAlpha by animateFloatAsState(
-                targetValue = if (highlightPaymentMethod) 1f else 0f,
-                animationSpec = tween(durationMillis = 300),
-                label = "paymentMethodHighlight"
-            )
-
-
-            val amount = amountInput.toDoubleOrNull() ?: 0.0
-            val description = descriptionInput
-            val isSharedExpense = isSharedExpenseInput
-            val isPaidByMe = isPaidByMeInput
-            val selectedPaymentMethod = paymentMethodInput
-            val selectedDate = datePickerState.selectedDateMillis?.let {
-                convertMillisToStringDate(it.plus(1000 * 60 * 60 * 5))
-            } ?: convertMillisToStringDate(Instant.now().toEpochMilli())
-
-            val isSaving by expenseEntryViewModel.isSaving.collectAsState()
-
-            val saveButtonLabel = if (isExpense) "gasto" else "ingreso"
-
             Text(
                 text = expenseSubCategory.name,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(bottom = 32.dp)
             )
+
+            // Balance mensual memoizado
+            val formattedBalance by remember(monthlyBalance.balance) {
+                derivedStateOf { FormatUtils.formatAsCurrency(monthlyBalance.balance) }
+            }
+
             Text(
-                text = "Total del mes: ${FormatUtils.formatAsCurrency(monthlyBalance.balance)}",
+                text = "Total del mes: $formattedBalance",
                 fontWeight = FontWeight.Light,
                 modifier = Modifier.padding(bottom = 16.dp)
             )
@@ -146,8 +189,8 @@ fun ExpenseEntryScreen(
             )
 
             TextField(
-                value = amountInput,
-                onValueChange = { amountInput = it },
+                value = formState.amountInput,
+                onValueChange = { formState = formState.copy(amountInput = it) },
                 label = {
                     Text("Ingresar $saveButtonLabel")
                 },
@@ -162,8 +205,8 @@ fun ExpenseEntryScreen(
             )
 
             TextField(
-                value = descriptionInput,
-                onValueChange = { descriptionInput = it },
+                value = formState.descriptionInput,
+                onValueChange = { formState = formState.copy(descriptionInput = it) },
                 label = {
                     Text("Descripción (opc.)")
                 },
@@ -183,36 +226,46 @@ fun ExpenseEntryScreen(
             )
 
             EntryDatePicker(
-                showDatePicker,
+                formState.showDatePicker,
                 datePickerState,
                 selectedDate,
-                { showDatePicker = !showDatePicker },
-                { showDatePicker = false }
+                { formState = formState.copy(showDatePicker = !formState.showDatePicker) },
+                { formState = formState.copy(showDatePicker = false) }
             )
 
             if (isExpense) {
                 PaymentMethodDropdown(
                     paymentMethods = paymentMethods,
-                    onClick = {
-                            index -> paymentMethodInput = if (index >= 0) paymentMethods[index] else null
+                    onClick = { index ->
+                        formState = formState.copy(
+                            paymentMethodInput = if (index >= 0) paymentMethods[index] else null
+                        )
                     },
                     selectedValue = selectedPaymentMethod,
                     highlightAlpha = paymentMethodHighlightAlpha
                 )
                 LabeledCheckbox(
                     label = "Es gasto compartido",
-                    isChecked = isSharedExpenseInput,
-                    onCheckedChange = { isSharedExpenseInput = it },
+                    isChecked = isSharedExpense,
+                    onCheckedChange = {
+                        formState = formState.copy(isSharedExpenseInput = it)
+                    },
                     modifier = Modifier
-                        .clickable { isSharedExpenseInput = !isSharedExpenseInput }
+                        .clickable {
+                            formState = formState.copy(isSharedExpenseInput = !formState.isSharedExpenseInput)
+                        }
                 )
-                if (isSharedExpenseInput) {
+                if (isSharedExpense) {
                     LabeledCheckbox(
                         label = "Pagado por mí",
-                        isChecked = isPaidByMeInput,
-                        onCheckedChange = { isPaidByMeInput = it },
+                        isChecked = isPaidByMe,
+                        onCheckedChange = {
+                            formState = formState.copy(isPaidByMeInput = it)
+                        },
                         modifier = Modifier
-                            .clickable { isPaidByMeInput = !isPaidByMeInput }
+                            .clickable {
+                                formState = formState.copy(isPaidByMeInput = !formState.isPaidByMeInput)
+                            }
                     )
                 }
             }
@@ -236,14 +289,11 @@ fun ExpenseEntryScreen(
                             selectedDate,
                             isPaidByMe
                         )
-                        amountInput = ""
-                        descriptionInput = ""
-                        isSharedExpenseInput = false
-                        expenseSaved = true
-                        isPaidByMeInput = true
+                        // Resetear formulario
+                        formState = ExpenseEntryFormState()
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = Color(160, 221, 230)),
-                    enabled = amountInput.isNotBlank() && amountInput.isNotEmpty(),
+                    enabled = isFormValid,
                     modifier = Modifier
                         .padding(bottom = 40.dp)
                         .height(50.dp)
@@ -269,7 +319,6 @@ fun ExpenseEntryScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center,
             ) {
-                var month = LocalDate.now().monthValue
                 if (isSaving) {
                     CircularProgressIndicator(
                         modifier = Modifier
@@ -278,46 +327,60 @@ fun ExpenseEntryScreen(
                         color = MaterialTheme.colorScheme.secondary
                     )
                 }
-                history.forEach { entry: EntryHistory ->
-                    if (month != entry.date.month.value) {
-                        month = entry.date.month.value
+
+                // Historial optimizado con memoización
+                val groupedHistory by remember(history) {
+                    derivedStateOf {
+                        history.groupBy { it.date.month.value }
+                    }
+                }
+
+                groupedHistory.forEach { (month, entries) ->
+                    if (month != LocalDate.now().monthValue) {
                         Divider(
                             thickness = 1.dp,
                             modifier = Modifier.padding(bottom = 8.dp, top = 8.dp)
                         )
                     }
-                    EntryHistoryCard(
-                        modifier = Modifier,
-                        entryRecord = entry,
-                        paymentMethods = paymentMethods,
-                        onLongPress = {
-                            // Copiar descripción y método de pago
-                            descriptionInput = entry.description
-                            paymentMethodInput = paymentMethods.find { it.uid == entry.paymentMethodId }
-
-                            // Activar highlights
-                            highlightDescription = true
-                            highlightPaymentMethod = true
-
-                            // Scroll hacia arriba para mostrar los campos de entrada
-                            scope.launch {
-                                scrollState.animateScrollTo(0)
-                                
-                                // Mostrar mensaje de confirmación
-                                snackbarHostState.showSnackbar(
-                                    message = "Datos copiados: ${entry.description}",
-                                    duration = androidx.compose.material3.SnackbarDuration.Short
+                    entries.forEach { entry ->
+                        EntryHistoryCard(
+                            modifier = Modifier,
+                            entryRecord = entry,
+                            paymentMethods = paymentMethods,
+                            onLongPress = {
+                                // Copiar datos al formulario
+                                formState = formState.copy(
+                                    amountInput = entry.amount.toString(),
+                                    descriptionInput = entry.description,
+                                    paymentMethodInput = paymentMethods.find { it.uid == entry.paymentMethodId },
+                                    highlightAmount = true,
+                                    highlightDescription = true,
+                                    highlightPaymentMethod = true
                                 )
-                            }
 
-                            // Desactivar highlights después de 0.5 segundos
-                            scope.launch {
-                                kotlinx.coroutines.delay(700)
-                                highlightDescription = false
-                                highlightPaymentMethod = false
+                                // Scroll hacia arriba
+                                scope.launch {
+                                    scrollState.animateScrollTo(0)
+
+                                    // Mostrar mensaje de confirmación
+                                    snackbarHostState.showSnackbar(
+                                        message = "Datos copiados: ${entry.description}",
+                                        duration = androidx.compose.material3.SnackbarDuration.Short
+                                    )
+                                }
+
+                                // Desactivar highlights después de 0.7 segundos
+                                scope.launch {
+                                    kotlinx.coroutines.delay(700)
+                                    formState = formState.copy(
+                                        highlightAmount = false,
+                                        highlightDescription = false,
+                                        highlightPaymentMethod = false
+                                    )
+                                }
                             }
-                        }
-                    )
+                        )
+                    }
                 }
             }
         }
