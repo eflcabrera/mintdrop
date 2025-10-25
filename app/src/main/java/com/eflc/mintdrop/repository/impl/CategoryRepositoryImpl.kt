@@ -5,6 +5,7 @@ import com.eflc.mintdrop.repository.CategoryRepository
 import com.eflc.mintdrop.room.dao.CategoryDao
 import com.eflc.mintdrop.room.dao.entity.Category
 import com.eflc.mintdrop.room.dao.entity.relationship.CategoryAndSubcategory
+import java.time.LocalDateTime
 import javax.inject.Inject
 
 class CategoryRepositoryImpl @Inject constructor(
@@ -28,5 +29,13 @@ class CategoryRepositoryImpl @Inject constructor(
 
     override suspend fun findCategoryByExternalIdAndEntryType(externalId: String, entryType: EntryType): Category {
         return dao.getCategoryByExternalIdAndEntryType(externalId, entryType)
+    }
+
+    override suspend fun deleteCategory(category: Category) {
+        dao.deleteCategory(category)
+    }
+
+    override suspend fun updateCategoryName(categoryId: Long, newName: String) {
+        dao.updateCategoryName(categoryId, newName, LocalDateTime.now().toString())
     }
 }

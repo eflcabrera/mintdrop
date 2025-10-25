@@ -1,6 +1,7 @@
 package com.eflc.mintdrop.room.dao
 
 import androidx.room.Dao
+import androidx.room.Delete
 import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Upsert
@@ -27,4 +28,10 @@ interface CategoryDao {
 
     @Query("SELECT * FROM category WHERE external_id = :externalId AND type = :entryType")
     fun getCategoryByExternalIdAndEntryType(externalId: String, entryType: EntryType): Category
+
+    @Delete
+    suspend fun deleteCategory(category: Category)
+
+    @Query("UPDATE category SET name = :newName, last_modified = :lastModified WHERE uid = :categoryId")
+    suspend fun updateCategoryName(categoryId: Long, newName: String, lastModified: String)
 }

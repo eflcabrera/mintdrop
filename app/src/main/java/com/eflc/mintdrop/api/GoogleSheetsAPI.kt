@@ -1,6 +1,8 @@
 package com.eflc.mintdrop.api
 
 import com.eflc.mintdrop.models.CategoriesResponse
+import com.eflc.mintdrop.models.CategoryManagementRequest
+import com.eflc.mintdrop.models.CategoryManagementResponse
 import com.eflc.mintdrop.models.ExpenseEntryRequest
 import com.eflc.mintdrop.models.ExpenseEntryResponse
 import retrofit2.http.Body
@@ -14,4 +16,7 @@ interface GoogleSheetsAPI {
 
     @POST("exec")
     suspend fun postExpense(@Body body: ExpenseEntryRequest) : ExpenseEntryResponse
+
+    @POST("exec")
+    suspend fun manageCategory(@Body body: CategoryManagementRequest) : CategoryManagementResponse
 }
