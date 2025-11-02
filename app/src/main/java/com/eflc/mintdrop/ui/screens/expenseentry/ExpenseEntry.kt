@@ -31,6 +31,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -119,7 +120,9 @@ fun ExpenseEntryScreen(
         derivedStateOf { formState.paymentMethodInput }
     }
 
-    val datePickerState = rememberDatePickerState()
+    // Estado mutable para la fecha seleccionada
+    var selectedDateMillisState by remember { mutableStateOf<Long?>(null) }
+    
     val scope = rememberCoroutineScope()
 
     // Animaciones optimizadas - solo se ejecutan cuando cambian los valores
@@ -139,9 +142,10 @@ fun ExpenseEntryScreen(
         label = "paymentMethodHighlight"
     )
 
-    val selectedDate by remember(datePickerState.selectedDateMillis) {
+    // Usar selectedDateMillisState si está establecido, de lo contrario usar la fecha actual
+    val selectedDate by remember(selectedDateMillisState) {
         derivedStateOf {
-            datePickerState.selectedDateMillis?.let {
+            selectedDateMillisState?.let {
                 convertMillisToStringDate(it.plus(1000 * 60 * 60 * 5))
             } ?: convertMillisToStringDate(Instant.now().toEpochMilli())
         }
@@ -225,13 +229,30 @@ fun ExpenseEntryScreen(
                     )
             )
 
-            EntryDatePicker(
-                formState.showDatePicker,
-                datePickerState,
-                selectedDate,
-                { formState = formState.copy(showDatePicker = !formState.showDatePicker) },
-                { formState = formState.copy(showDatePicker = false) }
-            )
+            key(selectedDateMillisState) {
+                val datePickerStateWithKey = rememberDatePickerState(
+                    initialSelectedDateMillis = selectedDateMillisState
+                )
+
+                LaunchedEffect(datePickerStateWithKey.selectedDateMillis) {
+                    datePickerStateWithKey.selectedDateMillis?.let { millis ->
+                        if (selectedDateMillisState != millis) {
+                            selectedDateMillisState = millis
+                        }
+                    }
+                }
+                
+                EntryDatePicker(
+                    formState.showDatePicker,
+                    datePickerStateWithKey,
+                    selectedDate,
+                    { formState = formState.copy(showDatePicker = !formState.showDatePicker) },
+                    { formState = formState.copy(showDatePicker = false) },
+                    onDateSelected = { millis ->
+                        selectedDateMillisState = millis
+                    }
+                )
+            }
 
             if (isExpense) {
                 PaymentMethodDropdown(
