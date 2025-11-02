@@ -24,6 +24,7 @@ import com.eflc.mintdrop.room.migration.MigrationFrom2To3
 import com.eflc.mintdrop.room.migration.MigrationFrom3To4
 import com.eflc.mintdrop.room.migration.MigrationFrom4To5
 import com.eflc.mintdrop.room.migration.MigrationFrom5To6
+import com.eflc.mintdrop.room.migration.MigrationFrom6To7
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -45,7 +46,8 @@ object DatabaseModule {
             MigrationFrom2To3(),
             MigrationFrom3To4(),
             MigrationFrom4To5(),
-            MigrationFrom5To6()
+            MigrationFrom5To6(),
+            MigrationFrom6To7()
         )
         .build()
     }

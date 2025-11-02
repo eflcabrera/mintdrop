@@ -4,6 +4,8 @@ import androidx.room.TypeConverter
 import com.eflc.mintdrop.models.EntryType
 import com.eflc.mintdrop.room.dao.entity.PaymentMethodType
 import com.eflc.mintdrop.room.dao.entity.SharedExpenseConfigType
+import com.eflc.mintdrop.room.dao.entity.SyncStatus
+import com.eflc.mintdrop.room.dao.entity.SyncTaskType
 import com.eflc.mintdrop.room.dao.entity.TransferOperationType
 import java.time.LocalDateTime
 
@@ -56,5 +58,25 @@ class Converters {
     @TypeConverter
     fun transferOperationTypeToString(type: TransferOperationType?): String? {
         return type?.name
+    }
+
+    @TypeConverter
+    fun stringToSyncTaskType(type: String?): SyncTaskType? {
+        return type?.let { SyncTaskType.valueOf(it) }
+    }
+
+    @TypeConverter
+    fun syncTaskTypeToString(type: SyncTaskType?): String? {
+        return type?.name
+    }
+
+    @TypeConverter
+    fun stringToSyncStatus(status: String?): SyncStatus? {
+        return status?.let { SyncStatus.valueOf(it) }
+    }
+
+    @TypeConverter
+    fun syncStatusToString(status: SyncStatus?): String? {
+        return status?.name
     }
 }

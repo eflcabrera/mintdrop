@@ -1,11 +1,15 @@
 package com.eflc.mintdrop.service.record.impl
 
+import android.util.Log
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
 import androidx.room.withTransaction
 import com.eflc.mintdrop.models.EntryType
 import com.eflc.mintdrop.models.ExpenseEntryRequest
 import com.eflc.mintdrop.models.ExpenseEntryResponse
 import com.eflc.mintdrop.models.SharedExpenseBalanceData
 import com.eflc.mintdrop.models.SharedExpenseSplit
+import com.eflc.mintdrop.models.SyncPayload
 import com.eflc.mintdrop.repository.CategoryRepository
 import com.eflc.mintdrop.repository.EntryHistoryRepository
 import com.eflc.mintdrop.repository.ExternalSheetRefRepository
@@ -16,12 +20,17 @@ import com.eflc.mintdrop.repository.SubcategoryRowRepository
 import com.eflc.mintdrop.room.JulepDatabase
 import com.eflc.mintdrop.room.dao.entity.EntryHistory
 import com.eflc.mintdrop.room.dao.entity.PaymentMethod
+import com.eflc.mintdrop.room.dao.entity.PendingSyncTask
 import com.eflc.mintdrop.room.dao.entity.SubcategoryMonthlyBalance
+import com.eflc.mintdrop.room.dao.entity.SyncStatus
+import com.eflc.mintdrop.room.dao.entity.SyncTaskType
 import com.eflc.mintdrop.room.dao.entity.relationship.EntryRecordAndSharedExpenseDetails
 import com.eflc.mintdrop.service.record.EntryRecordService
 import com.eflc.mintdrop.service.shared.SharedExpenseService
 import com.eflc.mintdrop.utils.Constants
 import com.eflc.mintdrop.utils.Constants.MY_USER_ID
+import com.eflc.mintdrop.worker.SyncWorker
+import com.squareup.moshi.Moshi
 import java.time.LocalDate
 import java.time.LocalDateTime
 import javax.inject.Inject
@@ -35,11 +44,12 @@ class EntryRecordServiceImpl @Inject constructor(
     private val subcategoryMonthlyBalanceRepository: SubcategoryMonthlyBalanceRepository,
     private val googleSheetsRepository: GoogleSheetsRepository,
     private val externalSheetRefRepository: ExternalSheetRefRepository,
-    private val sharedExpenseService: SharedExpenseService
+    private val sharedExpenseService: SharedExpenseService,
+    private val workManager: WorkManager,
+    private val moshi: Moshi
 ) : EntryRecordService {
 
     override suspend fun createRecord(entryRecord: EntryHistory, sheetName: String, paymentMethod: PaymentMethod?): ExpenseEntryResponse? {
-        var expenseEntryResponse: ExpenseEntryResponse? = null
         db.withTransaction {
             val entryRecordId = entryHistoryRepository.saveEntryHistory(entryRecord)
 
@@ -48,7 +58,7 @@ class EntryRecordServiceImpl @Inject constructor(
                 sharedExpenseService.createSharedExpenseEntries(entryRecord, entryRecordId)
 
                 if (entryRecord.paidBy != null && entryRecord.paidBy != MY_USER_ID) {
-                    return@withTransaction
+                    return@withTransaction null
                 }
             }
 
@@ -76,23 +86,47 @@ class EntryRecordServiceImpl @Inject constructor(
             subcategoryBalance.lastModified = LocalDateTime.now()
             subcategoryMonthlyBalanceRepository.saveSubcategoryMonthlyBalance(subcategoryBalance)
 
-            // Update Google sheet
-            expenseEntryResponse = googleSheetsRepository.postExpense(
-                buildExpenseEntryRequest(
-                    row = row.rowNumber,
-                    amount = entryRecord.amount,
-                    description = entryRecord.description,
-                    sheet = sheetName,
-                    isOwedInstallments = false,
-                    totalInstallments = 1,
-                    paymentMethod = paymentMethod?.description ?: "",
-                    month = monthValue,
-                    spreadsheetId = spreadsheetId
-                )
+            // Crear tarea de sincronización en lugar de llamar directamente a la API
+            val syncPayload = SyncPayload(
+                entryHistoryId = entryRecordId,
+                spreadsheetId = spreadsheetId,
+                sheetName = sheetName,
+                month = monthValue,
+                row = row.rowNumber,
+                amount = entryRecord.amount,
+                description = entryRecord.description,
+                isOwedInstallments = false,
+                totalInstallments = 1,
+                paymentMethod = paymentMethod?.description ?: ""
             )
+
+            // Serializar payload a JSON
+            val payloadJsonAdapter = moshi.adapter(SyncPayload::class.java)
+            val payloadJson = payloadJsonAdapter.toJson(syncPayload)
+
+            // Crear PendingSyncTask
+            val pendingSyncTask = PendingSyncTask(
+                taskType = SyncTaskType.EXPENSE_ENTRY,
+                payload = payloadJson,
+                status = SyncStatus.PENDING
+            )
+
+            val taskId = db.pendingSyncTaskDao.insertOrUpdateTask(pendingSyncTask)
+
+            // Encolar WorkManager para procesar en segundo plano
+            val syncWorkRequest = OneTimeWorkRequestBuilder<SyncWorker>()
+                .setInputData(SyncWorker.createInputData(taskId))
+                .addTag("sync_expense_entry")
+                .build()
+
+            workManager.enqueue(syncWorkRequest)
+
+            Log.d("EntryRecordService", "Tarea de sincronización creada: taskId=$taskId, entryHistoryId=$entryRecordId")
         }
 
-        return expenseEntryResponse
+        // Retornar null porque la sincronización se hará en segundo plano
+        // El usuario puede continuar sin esperar
+        return null
     }
 
     override suspend fun deleteRecord(entryRecord: EntryHistory) {

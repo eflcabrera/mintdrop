@@ -1,5 +1,6 @@
 package com.eflc.mintdrop.di
 
+import androidx.work.WorkManager
 import com.eflc.mintdrop.repository.CategoryRepository
 import com.eflc.mintdrop.repository.EntryHistoryRepository
 import com.eflc.mintdrop.repository.ExternalSheetRefRepository
@@ -13,6 +14,7 @@ import com.eflc.mintdrop.service.record.EntryRecordService
 import com.eflc.mintdrop.service.record.impl.EntryRecordServiceImpl
 import com.eflc.mintdrop.service.shared.SharedExpenseService
 import com.eflc.mintdrop.service.shared.impl.SharedExpenseServiceImpl
+import com.squareup.moshi.Moshi
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -34,7 +36,9 @@ object ServiceModule {
         googleSheetsRepository: GoogleSheetsRepository,
         categoryRepository: CategoryRepository,
         externalSheetRefRepository: ExternalSheetRefRepository,
-        sharedExpenseService: SharedExpenseService
+        sharedExpenseService: SharedExpenseService,
+        workManager: WorkManager,
+        moshi: Moshi
     ): EntryRecordService {
         return EntryRecordServiceImpl(
             db,
@@ -45,7 +49,9 @@ object ServiceModule {
             subcategoryMonthlyBalanceRepository,
             googleSheetsRepository,
             externalSheetRefRepository,
-            sharedExpenseService
+            sharedExpenseService,
+            workManager,
+            moshi
         )
     }
 
