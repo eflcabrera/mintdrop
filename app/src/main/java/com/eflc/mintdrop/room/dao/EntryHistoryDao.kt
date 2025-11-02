@@ -38,4 +38,7 @@ interface EntryHistoryDao {
     @Query("SELECT * FROM entry_history WHERE is_settled = 0")
     @Transaction
     fun getEntryRecordsWithUnsettledSharedExpenses(): List<EntryRecordAndSharedExpenseDetails>
+    
+    @Query("UPDATE entry_history SET synced_to_sheets = 1 WHERE uid = :entryHistoryId")
+    suspend fun markAsSyncedToSheets(entryHistoryId: Long)
 }
