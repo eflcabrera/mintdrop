@@ -62,7 +62,7 @@ fun PaymentMethodDropdown(
         modifier = Modifier
             .fillMaxSize()
             .wrapContentSize(Alignment.Center)
-            .padding(bottom = 20.dp)
+            .padding(bottom = 20.dp, top = 20.dp)
     ) {
         Box(modifier = Modifier.height(IntrinsicSize.Min)) {
             TextField(

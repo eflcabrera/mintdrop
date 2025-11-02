@@ -23,8 +23,6 @@ import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.IOException
@@ -194,7 +192,7 @@ class ExpenseEntryViewModel @Inject constructor(
 
                     if (balance == null) {
                         val total: Double = entryHistoryRepository.findEntryHistoryBySubcategoryId(subcategory.uid)
-                            .filter { it.date.month.value == LocalDate.now().monthValue }
+                            .filter { it.date.month.value == currentMonth && it.date.year == currentYear }
                             .sumOf { it.amount }
 
                         balance = SubcategoryMonthlyBalance(
