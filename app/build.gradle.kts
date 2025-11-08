@@ -181,11 +181,13 @@ dependencies {
     implementation("com.squareup.retrofit2:converter-gson:$retrofitVersion")
     implementation("com.squareup.retrofit2:converter-scalars:$retrofitVersion")
     implementation("com.google.dagger:hilt-android:2.48.1")
+    implementation("androidx.hilt:hilt-work:1.0.0")
     implementation("com.squareup.moshi:moshi-kotlin:1.15.0")
     implementation("com.squareup.retrofit2:converter-moshi:$retrofitVersion")
     implementation("androidx.room:room-ktx:$roomVersion")
     implementation("androidx.room:room-runtime:$roomVersion")
     implementation("androidx.room:room-paging:$roomVersion")
+    implementation("androidx.work:work-runtime-ktx:2.9.0")
     implementation("co.yml:ycharts:2.1.0")
 
     // Optimizaciones de rendimiento

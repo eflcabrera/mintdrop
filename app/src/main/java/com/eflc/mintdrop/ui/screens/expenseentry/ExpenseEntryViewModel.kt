@@ -106,15 +106,13 @@ class ExpenseEntryViewModel @Inject constructor(
                     isSettled = if (isShared) false else null
                 )
 
-                val expenseEntryResponse: ExpenseEntryResponse? = withContext(IO) {
+                // Guardar registro en base de datos local (rápido)
+                // La sincronización con Google Sheets se hará en segundo plano
+                withContext(IO) {
                     entryRecordService.createRecord(entryHistory, sheet, paymentMethod)
                 }
 
-                if (expenseEntryResponse != null) {
-                    _expenseEntryResponse.tryEmit(expenseEntryResponse)
-                }
-
-                // Actualizar datos en paralelo
+                // Actualizar datos en paralelo para mostrar el nuevo gasto en la lista
                 launch { getEntryHistory(categoryType, expenseSubCategory.id) }
                 launch { getMonthlyBalance(categoryType, expenseSubCategory.id) }
                 
