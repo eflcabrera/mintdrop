@@ -31,3 +31,4 @@ class MigrationFrom6To7 : Migration(6, 7) {
     }
 }
 
+

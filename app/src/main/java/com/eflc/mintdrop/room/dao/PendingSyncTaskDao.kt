@@ -66,3 +66,4 @@ interface PendingSyncTaskDao {
     suspend fun deleteCompletedTasksOlderThan(status: SyncStatus, beforeDate: LocalDateTime)
 }
 
+
