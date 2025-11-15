@@ -11,7 +11,11 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material3.Card
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -21,8 +25,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -75,6 +79,15 @@ fun EntryHistoryCard(
     // Constantes memoizadas
     val colorSharedGreen = remember { Color(54, 180, 103) }
     val colorCreditCard = remember { Color(66, 135, 245) }
+    val colorSynced = remember { Color(54, 180, 103) } // Verde para sincronizado
+    val colorPending = remember { Color(255, 152, 0) } // Naranja para pendiente
+    
+    // Estado de sincronización memoizado
+    val syncStatus by remember(entryRecord.syncedToSheets) {
+        derivedStateOf {
+            entryRecord.syncedToSheets
+        }
+    }
 
     return Card(
         shape = MaterialTheme.shapes.extraSmall,
@@ -109,7 +122,32 @@ fun EntryHistoryCard(
                     maxLines = 1,
                     modifier = Modifier.width(170.dp)
                 )
-                Text(text = formattedDate, fontSize = 12.sp)
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Start
+                ) {
+                    Text(text = formattedDate, fontSize = 12.sp)
+                    // Ícono de sincronización
+                    if (syncStatus) {
+                        Icon(
+                            imageVector = Icons.Filled.CheckCircle,
+                            contentDescription = "Sincronizado",
+                            tint = colorSynced,
+                            modifier = Modifier
+                                .size(16.dp)
+                                .padding(start = 6.dp)
+                        )
+                    } else {
+                        Icon(
+                            imageVector = Icons.Outlined.CheckCircle,
+                            contentDescription = "Sincronizado",
+                            tint = colorPending,
+                            modifier = Modifier
+                                .size(16.dp)
+                                .padding(start = 6.dp)
+                        )
+                    }
+                }
             }
             Column(
                 horizontalAlignment = Alignment.End,
@@ -204,7 +242,8 @@ fun EntryHistoryCardPreview() {
             isShared = true,
             paymentMethodId = 1,
             isSettled = false,
-            paidBy = 1L
+            paidBy = 1L,
+            syncedToSheets = false
         ),
         paymentMethods = listOf(PaymentMethod(1, "Crédito", PaymentMethodType.CREDIT_CARD)),
         sharedExpenseDetails = listOf(
