@@ -11,7 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.compose.rememberNavController
 import com.eflc.mintdrop.graph.RootNavigationGraph
-import com.eflc.mintdrop.ui.theme.MintDropTheme
+import com.eflc.mintdrop.ui.theme.JulepTheme
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -20,7 +20,7 @@ class MainActivity() : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            MintDropTheme {
+            JulepTheme {
                 // A surface container using the 'background' color from the theme
                 Surface(
                     modifier = Modifier.fillMaxSize(),
@@ -35,8 +35,8 @@ class MainActivity() : ComponentActivity() {
 
 @Preview(showBackground = true)
 @Composable
-fun MintDropLayoutPreview() {
-    MintDropTheme {
+fun JulepLayoutPreview() {
+    JulepTheme {
         RootNavigationGraph(navController = rememberNavController())
     }
 }

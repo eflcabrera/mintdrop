@@ -20,6 +20,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "Mint Drop"
+rootProject.name = "Julep"
 include(":app")
  

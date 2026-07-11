@@ -19,6 +19,7 @@ import com.eflc.mintdrop.repository.impl.SubcategoryMonthlyBalanceRepositoryImpl
 import com.eflc.mintdrop.repository.impl.SubcategoryRepositoryImpl
 import com.eflc.mintdrop.repository.impl.SubcategoryRowRepositoryImpl
 import com.eflc.mintdrop.room.JulepDatabase
+import com.eflc.mintdrop.room.migration.MigrationFrom1To2
 import com.eflc.mintdrop.room.migration.MigrationFrom2To3
 import com.eflc.mintdrop.room.migration.MigrationFrom3To4
 import com.eflc.mintdrop.room.migration.MigrationFrom4To5
@@ -40,6 +41,7 @@ object DatabaseModule {
             JulepDatabase::class.java,
             "julep.db")
         .addMigrations(
+            MigrationFrom1To2(),
             MigrationFrom2To3(),
             MigrationFrom3To4(),
             MigrationFrom4To5(),
