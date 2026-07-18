@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 7,
-    "identityHash": "784ee4779e83304d80e7b0a1bbd5f610",
+    "identityHash": "6bd2f61ab70774da6ee62bfb2c4431ff",
     "entities": [
       {
         "tableName": "category",
@@ -665,13 +665,25 @@
       },
       {
         "tableName": "pending_sync_task",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`uid` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `task_type` TEXT NOT NULL, `payload` TEXT NOT NULL, `status` TEXT NOT NULL, `attempt_count` INTEGER NOT NULL, `max_attempts` INTEGER NOT NULL, `created_on` TEXT NOT NULL, `last_attempt_on` TEXT, `error_message` TEXT, `completed_on` TEXT)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`uid` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `operation_id` TEXT NOT NULL, `entry_history_id` INTEGER, `task_type` TEXT NOT NULL, `payload` TEXT NOT NULL, `status` TEXT NOT NULL, `attempt_count` INTEGER NOT NULL, `max_attempts` INTEGER NOT NULL, `created_on` TEXT NOT NULL, `last_attempt_on` TEXT, `error_message` TEXT, `completed_on` TEXT)",
         "fields": [
           {
             "fieldPath": "uid",
             "columnName": "uid",
             "affinity": "INTEGER",
             "notNull": true
+          },
+          {
+            "fieldPath": "operationId",
+            "columnName": "operation_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "entryHistoryId",
+            "columnName": "entry_history_id",
+            "affinity": "INTEGER",
+            "notNull": false
           },
           {
             "fieldPath": "taskType",
@@ -744,6 +756,24 @@
             ],
             "orders": [],
             "createSql": "CREATE INDEX IF NOT EXISTS `index_pending_sync_task_status_attempt_count` ON `${TABLE_NAME}` (`status`, `attempt_count`)"
+          },
+          {
+            "name": "index_pending_sync_task_operation_id",
+            "unique": true,
+            "columnNames": [
+              "operation_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_pending_sync_task_operation_id` ON `${TABLE_NAME}` (`operation_id`)"
+          },
+          {
+            "name": "index_pending_sync_task_entry_history_id",
+            "unique": false,
+            "columnNames": [
+              "entry_history_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_pending_sync_task_entry_history_id` ON `${TABLE_NAME}` (`entry_history_id`)"
           }
         ],
         "foreignKeys": []
@@ -752,7 +782,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '784ee4779e83304d80e7b0a1bbd5f610')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '6bd2f61ab70774da6ee62bfb2c4431ff')"
     ]
   }
 }

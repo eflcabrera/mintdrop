@@ -2,6 +2,7 @@ package com.eflc.mintdrop.ui.screens.expenseentry
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.eflc.mintdrop.models.EntrySyncUiState
 import com.eflc.mintdrop.models.EntryType
 import com.eflc.mintdrop.models.ExpenseEntryResponse
 import com.eflc.mintdrop.models.ExpenseSubCategory
@@ -13,6 +14,7 @@ import com.eflc.mintdrop.room.dao.entity.EntryHistory
 import com.eflc.mintdrop.room.dao.entity.PaymentMethod
 import com.eflc.mintdrop.room.dao.entity.SubcategoryMonthlyBalance
 import com.eflc.mintdrop.service.record.EntryRecordService
+import com.eflc.mintdrop.service.sync.OutboxEnqueuer
 import com.eflc.mintdrop.utils.Constants
 import com.eflc.mintdrop.utils.Constants.MY_USER_ID
 import com.eflc.mintdrop.utils.Constants.THEIR_USER_ID
@@ -20,6 +22,7 @@ import com.eflc.mintdrop.utils.FormatUtils.Companion.formatDateFromString
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers.IO
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -31,7 +34,6 @@ import java.time.LocalDateTime
 import java.time.LocalTime
 import javax.inject.Inject
 
-// Estados de error para mejor manejo
 sealed class ExpenseEntryError {
     object NetworkError : ExpenseEntryError()
     object DatabaseError : ExpenseEntryError()
@@ -46,17 +48,21 @@ class ExpenseEntryViewModel @Inject constructor(
     private val subcategoryRepository: SubcategoryRepository,
     private val paymentMethodRepository: PaymentMethodRepository,
     private val subcategoryMonthlyBalanceRepository: SubcategoryMonthlyBalanceRepository,
-    private val entryRecordService: EntryRecordService
+    private val entryRecordService: EntryRecordService,
+    private val outboxEnqueuer: OutboxEnqueuer
 ) : ViewModel() {
-    
-    // Cache para evitar consultas repetidas
+
     private var cachedSubcategory: Pair<EntryType, String>? = null
     private var cachedSubcategoryId: Long? = null
-    
+    private var historyObserveJob: Job? = null
+
     private val _expenseEntryResponse = MutableStateFlow(ExpenseEntryResponse("", 0.0, 0.0))
 
     private val _entryHistoryList = MutableStateFlow(emptyList<EntryHistory>())
     val entryHistoryList = _entryHistoryList.asStateFlow()
+
+    private val _failedSyncEntryIds = MutableStateFlow<Set<Long>>(emptySet())
+    val failedSyncEntryIds = _failedSyncEntryIds.asStateFlow()
 
     private val _paymentMethodList = MutableStateFlow(emptyList<PaymentMethod>())
     val paymentMethodList = _paymentMethodList.asStateFlow()
@@ -66,33 +72,56 @@ class ExpenseEntryViewModel @Inject constructor(
 
     private val _monthlyBalance = MutableStateFlow(SubcategoryMonthlyBalance(0, 0, 0, 0, 0.0))
     val monthlyBalance = _monthlyBalance.asStateFlow()
-    
-    // Estados de error
+
     private val _error = MutableStateFlow<ExpenseEntryError?>(null)
     val error = _error.asStateFlow()
-    
+
     private val _isLoading = MutableStateFlow(false)
     val isLoading = _isLoading.asStateFlow()
 
-    fun postExpense(amount: Double,
-                    description: String,
-                    sheet: String,
-                    isShared: Boolean,
-                    expenseSubCategory: ExpenseSubCategory,
-                    paymentMethod: PaymentMethod?,
-                    selectedDate: String,
-                    isPaidByMe: Boolean
+    init {
+        viewModelScope.launch {
+            outboxEnqueuer.observeFailedEntryHistoryIds().collect { ids ->
+                _failedSyncEntryIds.tryEmit(ids)
+            }
+        }
+    }
+
+    fun syncStateFor(entry: EntryHistory): EntrySyncUiState {
+        return when {
+            entry.syncedToSheets -> EntrySyncUiState.SYNCED
+            entry.uid in _failedSyncEntryIds.value -> EntrySyncUiState.FAILED
+            else -> EntrySyncUiState.PENDING
+        }
+    }
+
+    fun retryFailedSync(entryHistoryId: Long) {
+        viewModelScope.launch {
+            withContext(IO) {
+                entryRecordService.retryFailedSync(entryHistoryId)
+            }
+        }
+    }
+
+    fun postExpense(
+        amount: Double,
+        description: String,
+        sheet: String,
+        isShared: Boolean,
+        expenseSubCategory: ExpenseSubCategory,
+        paymentMethod: PaymentMethod?,
+        selectedDate: String,
+        isPaidByMe: Boolean
     ) {
         viewModelScope.launch {
             try {
                 _isSaving.tryEmit(true)
-                _error.tryEmit(null) // Limpiar errores anteriores
-                
+                _error.tryEmit(null)
+
                 val categoryType = if (sheet == Constants.EXPENSE_SHEET_NAME) EntryType.EXPENSE else EntryType.INCOME
 
                 val subcategory = getSubcategoryWithCache(categoryType, expenseSubCategory.id)
 
-                // Create new entry
                 val entryHistory = EntryHistory(
                     subcategoryId = subcategory.uid,
                     amount = amount,
@@ -106,24 +135,16 @@ class ExpenseEntryViewModel @Inject constructor(
                     isSettled = if (isShared) false else null
                 )
 
-                // Guardar registro en base de datos local (rápido)
-                // La sincronización con Google Sheets se hará en segundo plano
                 withContext(IO) {
                     entryRecordService.createRecord(entryHistory, sheet, paymentMethod)
                 }
 
-                // Actualizar datos en paralelo para mostrar el nuevo gasto en la lista
-                launch { getEntryHistory(categoryType, expenseSubCategory.id) }
                 launch { getMonthlyBalance(categoryType, expenseSubCategory.id) }
-                
             } catch (e: IOException) {
-                // Error de red
                 _error.tryEmit(ExpenseEntryError.NetworkError)
             } catch (e: IllegalArgumentException) {
-                // Error de validación
                 _error.tryEmit(ExpenseEntryError.ValidationError)
             } catch (e: Exception) {
-                // Error desconocido
                 _error.tryEmit(ExpenseEntryError.UnknownError(e.message ?: "Error desconocido"))
             } finally {
                 _isSaving.tryEmit(false)
@@ -136,18 +157,22 @@ class ExpenseEntryViewModel @Inject constructor(
             try {
                 _isLoading.tryEmit(true)
                 _error.tryEmit(null)
-                
+
                 val subcategory = getSubcategoryWithCache(categoryType, subCategoryId)
-                val history = withContext(IO) {
-                    entryHistoryRepository.findEntryHistoryBySubcategoryId(subcategory.uid)
+
+                historyObserveJob?.cancel()
+                historyObserveJob = viewModelScope.launch {
+                    entryHistoryRepository.observeEntryHistoryBySubcategoryId(subcategory.uid)
+                        .collect { history ->
+                            _entryHistoryList.tryEmit(history)
+                            _isLoading.tryEmit(false)
+                        }
                 }
-                _entryHistoryList.tryEmit(history)
-                
             } catch (e: IOException) {
                 _error.tryEmit(ExpenseEntryError.NetworkError)
+                _isLoading.tryEmit(false)
             } catch (e: Exception) {
                 _error.tryEmit(ExpenseEntryError.DatabaseError)
-            } finally {
                 _isLoading.tryEmit(false)
             }
         }
@@ -157,12 +182,11 @@ class ExpenseEntryViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 _error.tryEmit(null)
-                
+
                 val paymentMethods = withContext(IO) {
                     paymentMethodRepository.findAllPaymentMethods()
                 }
                 _paymentMethodList.tryEmit(paymentMethods)
-                
             } catch (e: IOException) {
                 _error.tryEmit(ExpenseEntryError.NetworkError)
             } catch (e: Exception) {
@@ -175,12 +199,12 @@ class ExpenseEntryViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 _error.tryEmit(null)
-                
+
                 val currentMonth = LocalDate.now().monthValue
                 val currentYear = LocalDate.now().year
 
                 val subcategory = getSubcategoryWithCache(categoryType, subCategoryId)
-                
+
                 val balance = withContext(IO) {
                     var balance = subcategoryMonthlyBalanceRepository.findBalanceBySubcategoryIdAndPeriod(
                         subcategory.uid,
@@ -205,7 +229,6 @@ class ExpenseEntryViewModel @Inject constructor(
                 }
 
                 _monthlyBalance.tryEmit(balance)
-                
             } catch (e: IOException) {
                 _error.tryEmit(ExpenseEntryError.NetworkError)
             } catch (e: Exception) {
@@ -214,22 +237,20 @@ class ExpenseEntryViewModel @Inject constructor(
         }
     }
 
-    /**
-     * Función optimizada para obtener subcategoría con cache
-     */
-    private suspend fun getSubcategoryWithCache(categoryType: EntryType, subCategoryId: String): com.eflc.mintdrop.room.dao.entity.Subcategory {
+    private suspend fun getSubcategoryWithCache(
+        categoryType: EntryType,
+        subCategoryId: String
+    ): com.eflc.mintdrop.room.dao.entity.Subcategory {
         val cacheKey = categoryType to subCategoryId
-        
+
         return if (cachedSubcategory == cacheKey && cachedSubcategoryId != null) {
-            // Retornar desde cache si existe
             com.eflc.mintdrop.room.dao.entity.Subcategory(
                 uid = cachedSubcategoryId!!,
                 externalId = subCategoryId,
-                name = "", // No necesitamos el nombre para las operaciones
-                categoryId = 0L // No necesitamos el categoryId para las operaciones
+                name = "",
+                categoryId = 0L
             )
         } else {
-            // Buscar en base de datos y actualizar cache
             val subcategory = withContext(IO) {
                 subcategoryRepository.findSubcategoryByExternalIdAndCategoryType(categoryType, subCategoryId)
             }
@@ -238,18 +259,15 @@ class ExpenseEntryViewModel @Inject constructor(
             subcategory
         }
     }
-    
-    /**
-     * Limpiar errores
-     */
+
     fun clearError() {
         _error.tryEmit(null)
     }
 
     override fun onCleared() {
         super.onCleared()
+        historyObserveJob?.cancel()
         coroutineScope.cancel()
-        // Limpiar cache
         cachedSubcategory = null
         cachedSubcategoryId = null
     }

@@ -312,7 +312,7 @@ Tras forzar con `backupnow`, dejar el dispositivo desbloqueado unos segundos y r
 La documentación del proyecto vive en este repositorio:
 
 - Este `README.md` — overview, arquitectura, setup, backend, persistencia y convenciones.
-- [`AGENTS.md`](AGENTS.md) — reglas para contribuir, checklist de cambios, deuda técnica priorizada (gaps G-01…G-17) e instrucciones para agentes de IA.
+- [`AGENTS.md`](AGENTS.md) — reglas para contribuir, checklist de cambios, deuda técnica priorizada (gaps G-01…G-18) e instrucciones para agentes de IA.
 - Código fuente — entidades Room en `room/`, DTOs en `models/`, Apps Script de referencia en `api/reference/`, schemas en `app/schemas/`.
 
 ---
@@ -324,7 +324,7 @@ La documentación del proyecto vive en este repositorio:
 - **Modelo cerrado de 2 usuarios** (`MY_USER_ID = 1`, `THEIR_USER_ID = 2`, nombres de usuario hardcodeados en `PdfUtils`).
 - **Sin tests** (`test/` y `androidTest/` vacíos).
 - **Sin auth** (backend expuesto como Web App público de Apps Script).
-- **Sincronización Room↔Sheet no atómica** (riesgo de inconsistencia ante caída de red).
+- **Sincronización Room↔Sheet vía transactional outbox** (SPEC-013): escrituras locales + cola `pending_sync_task`, sync asíncrona con WorkManager, reintentos e idempotencia por `operationId` en Apps Script. Requiere redeploy del `.gs` de referencia al mergear.
 - **Splits sólo SHARES** implementado (`EQUAL_PARTS` y `PERCENTAGES` declarados pero sin lógica).
 - **Sin onboarding del `external_sheet_ref`** → crash NPE en install limpio o cambio de año.
 

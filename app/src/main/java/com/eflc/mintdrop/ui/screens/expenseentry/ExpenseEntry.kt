@@ -44,6 +44,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.eflc.mintdrop.models.EntrySyncUiState
 import com.eflc.mintdrop.models.EntryType
 import com.eflc.mintdrop.models.ExpenseSubCategory
 import com.eflc.mintdrop.room.dao.entity.PaymentMethod
@@ -98,6 +99,7 @@ fun ExpenseEntryScreen(
     val paymentMethods by expenseEntryViewModel.paymentMethodList.collectAsState()
     val monthlyBalance by expenseEntryViewModel.monthlyBalance.collectAsState()
     val isSaving by expenseEntryViewModel.isSaving.collectAsState()
+    val failedSyncEntryIds by expenseEntryViewModel.failedSyncEntryIds.collectAsState()
 
     // Valores derivados memoizados para evitar recálculos
     val amount by remember(formState.amountInput) {
@@ -364,10 +366,19 @@ fun ExpenseEntryScreen(
                         )
                     }
                     entries.forEach { entry ->
+                        val syncState = remember(entry.syncedToSheets, entry.uid, failedSyncEntryIds) {
+                            expenseEntryViewModel.syncStateFor(entry)
+                        }
                         EntryHistoryCard(
                             modifier = Modifier,
                             entryRecord = entry,
                             paymentMethods = paymentMethods,
+                            syncState = syncState,
+                            onRetrySync = if (syncState == EntrySyncUiState.FAILED) {
+                                { expenseEntryViewModel.retryFailedSync(entry.uid) }
+                            } else {
+                                null
+                            },
                             onLongPress = {
                                 // Copiar datos al formulario
                                 formState = formState.copy(

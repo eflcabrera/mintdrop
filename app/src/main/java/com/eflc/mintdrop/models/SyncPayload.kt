@@ -5,6 +5,8 @@ import com.squareup.moshi.JsonClass
 
 @JsonClass(generateAdapter = true)
 data class SyncPayload(
+    @Json(name = "operationId")
+    val operationId: String,
     @Json(name = "entryHistoryId")
     val entryHistoryId: Long,
     @Json(name = "spreadsheet_id")
@@ -28,6 +30,7 @@ data class SyncPayload(
 ) {
     fun toExpenseEntryRequest(): ExpenseEntryRequest {
         return ExpenseEntryRequest(
+            operationId = operationId,
             spreadsheetId = spreadsheetId,
             sheetName = sheetName,
             month = month,
@@ -40,5 +43,3 @@ data class SyncPayload(
         )
     }
 }
-
-

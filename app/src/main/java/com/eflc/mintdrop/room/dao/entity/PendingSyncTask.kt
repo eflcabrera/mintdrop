@@ -22,38 +22,44 @@ enum class SyncStatus {
     tableName = "pending_sync_task",
     indices = [
         Index(value = ["status", "attempt_count"]),
+        Index(value = ["operation_id"], unique = true),
+        Index(value = ["entry_history_id"]),
     ]
 )
 data class PendingSyncTask(
     @PrimaryKey(autoGenerate = true)
     val uid: Long = 0,
-    
+
+    @ColumnInfo(name = "operation_id")
+    val operationId: String,
+
+    @ColumnInfo(name = "entry_history_id")
+    val entryHistoryId: Long? = null,
+
     @ColumnInfo(name = "task_type")
     val taskType: SyncTaskType,
-    
+
     @ColumnInfo(name = "payload")
-    val payload: String,  // JSON serializado con ExpenseEntryRequest + entryHistoryId
-    
+    val payload: String,
+
     @ColumnInfo(name = "status")
     val status: SyncStatus,
-    
+
     @ColumnInfo(name = "attempt_count")
     val attemptCount: Int = 0,
-    
+
     @ColumnInfo(name = "max_attempts")
     val maxAttempts: Int = 3,
-    
+
     @ColumnInfo(name = "created_on")
     val createdOn: LocalDateTime = LocalDateTime.now(),
-    
+
     @ColumnInfo(name = "last_attempt_on")
     val lastAttemptOn: LocalDateTime? = null,
-    
+
     @ColumnInfo(name = "error_message")
     val errorMessage: String? = null,
-    
+
     @ColumnInfo(name = "completed_on")
     val completedOn: LocalDateTime? = null
 )
-
-

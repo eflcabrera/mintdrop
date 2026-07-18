@@ -32,10 +32,13 @@ class SyncWorker @AssistedInject constructor(
         val pendingSyncTaskDao = db.pendingSyncTaskDao
         val entryHistoryDao = db.entryHistoryDao
 
-        // Obtener la tarea
         val task = pendingSyncTaskDao.getTaskById(taskId) ?: return Result.failure()
 
-        // Actualizar estado a IN_PROGRESS
+        // Tarea ya finalizada (p.ej. cancelada por undo local)
+        if (task.status == SyncStatus.COMPLETED) {
+            return Result.success()
+        }
+
         val attemptCount = task.attemptCount + 1
         pendingSyncTaskDao.updateTaskStatus(
             taskId = task.uid,
@@ -46,27 +49,20 @@ class SyncWorker @AssistedInject constructor(
         )
 
         return try {
-            // Deserializar payload
-            val payloadJsonAdapter = moshi.adapter(SyncPayload::class.java)
-            val payload = payloadJsonAdapter.fromJson(task.payload)
+            val payload = moshi.adapter(SyncPayload::class.java).fromJson(task.payload)
                 ?: return handleFailure(task.uid, attemptCount, "Error deserializando payload")
 
-            // Validar que sea EXPENSE_ENTRY
             if (task.taskType.name != "EXPENSE_ENTRY") {
                 return handleFailure(task.uid, attemptCount, "Tipo de tarea no soportado: ${task.taskType}")
             }
 
-            // Llamar a la API
             val request = payload.toExpenseEntryRequest()
-            val response = googleSheetsRepository.postExpense(request)
+            googleSheetsRepository.postExpense(request)
 
-            // Si llegamos aquí sin excepción, la operación fue exitosa
-            // Marcar tarea como completada
+            // Éxito o dedupe (deduped=true) → ambos son OK e idempotentes
             pendingSyncTaskDao.markAsCompleted(task.uid, SyncStatus.COMPLETED, LocalDateTime.now())
-            
-            // Marcar EntryHistory como sincronizada
             entryHistoryDao.markAsSyncedToSheets(payload.entryHistoryId)
-            
+
             Result.success()
         } catch (e: Exception) {
             handleFailure(task.uid, attemptCount, e.message ?: "Error desconocido")
@@ -75,14 +71,12 @@ class SyncWorker @AssistedInject constructor(
 
     private suspend fun handleFailure(taskId: Long, attemptCount: Int, errorMessage: String): Result {
         val pendingSyncTaskDao = db.pendingSyncTaskDao
-        
-        // Obtener la tarea actualizada para verificar maxAttempts
         val task = pendingSyncTaskDao.getTaskById(taskId) ?: return Result.failure()
-        
+
         val finalStatus = if (attemptCount >= task.maxAttempts) {
             SyncStatus.FAILED
         } else {
-            SyncStatus.PENDING  // Para reintentar
+            SyncStatus.PENDING
         }
 
         pendingSyncTaskDao.updateTaskStatus(
@@ -93,8 +87,6 @@ class SyncWorker @AssistedInject constructor(
             errorMessage = errorMessage
         )
 
-        // Si alcanzó el máximo de intentos, retornar failure
-        // Si aún tiene intentos, retornar retry para que WorkManager reintente
         return if (attemptCount >= task.maxAttempts) {
             Result.failure(workDataOf(ERROR_KEY to errorMessage))
         } else {
@@ -109,4 +101,3 @@ class SyncWorker @AssistedInject constructor(
         fun createInputData(taskId: Long) = workDataOf(TASK_ID_KEY to taskId)
     }
 }
-
