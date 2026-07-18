@@ -52,6 +52,8 @@ class EntryRecordServiceImpl @Inject constructor(
                 sharedExpenseService.createSharedExpenseEntries(entryRecord, entryRecordId)
 
                 if (entryRecord.paidBy != null && entryRecord.paidBy != MY_USER_ID) {
+                    // No se postea al Sheet de este usuario → no mostrar PENDING eterno
+                    db.entryHistoryDao.markAsSyncedToSheets(entryRecordId)
                     return@withTransaction
                 }
             }
@@ -125,10 +127,13 @@ class EntryRecordServiceImpl @Inject constructor(
                 subcategoryMonthlyBalanceRepository.saveSubcategoryMonthlyBalance(currentBalance)
             }
 
-            // Si nunca llegó al Sheet, cancelar create pendiente y no postear UNDO
+            // Si aún no se marcó synced: cancelar create pendiente; si estaba IN_PROGRESS
+            // (o ya COMPLETED) encolar UNDO compensatorio para no dejar monto huérfano en Sheet
             if (!entryRecord.syncedToSheets) {
-                outboxEnqueuer.cancelActiveTasksForEntry(entryRecord.uid)
-                return@withTransaction
+                val needsCompensatingUndo = outboxEnqueuer.cancelActiveTasksForEntry(entryRecord.uid)
+                if (!needsCompensatingUndo) {
+                    return@withTransaction
+                }
             }
 
             val spreadsheetId = externalSheetRefRepository.findExternalSheetRefByYear(entryRecord.date.year)?.sheetId!!
@@ -138,21 +143,15 @@ class EntryRecordServiceImpl @Inject constructor(
                 if (cat.category.type == EntryType.EXPENSE) Constants.EXPENSE_SHEET_NAME
                 else Constants.INCOME_SHEET_NAME
 
-            val undoPayload = SyncPayload(
-                operationId = outboxEnqueuer.newOperationId(),
+            taskIdToSchedule = outboxEnqueuer.enqueueUndoIfAbsent(
                 entryHistoryId = entryRecord.uid,
                 spreadsheetId = spreadsheetId,
                 sheetName = sheetName,
                 month = entryRecord.date.monthValue,
                 row = row.rowNumber,
-                amount = -1 * entryRecord.amount,
-                description = "UNDO ${entryRecord.description}",
-                isOwedInstallments = false,
-                totalInstallments = 1,
-                paymentMethod = ""
+                originalAmount = entryRecord.amount,
+                originalDescription = entryRecord.description
             )
-
-            taskIdToSchedule = outboxEnqueuer.enqueue(undoPayload)
         }
 
         taskIdToSchedule?.let { outboxEnqueuer.scheduleSync(it) }

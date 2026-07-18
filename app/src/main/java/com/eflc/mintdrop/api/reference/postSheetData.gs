@@ -13,38 +13,47 @@ function doPost(request) {
   var paymentMethod = jsonPayload.paymentMethod;
 
   var cache = CacheService.getScriptCache();
+  var props = PropertiesService.getScriptProperties();
   var lock = LockService.getScriptLock();
+  var cacheKey = operationId ? ("op_" + operationId) : null;
 
-  // Idempotencia: mismo operationId no vuelve a modificar la celda (TTL 6h)
-  if (operationId) {
-    var cacheKey = "op_" + operationId;
-    if (cache.get(cacheKey) != null) {
-      return ContentService
-        .createTextOutput(JSON.stringify({
-          sheet: sheetName,
-          previousAmount: 0,
-          finalAmount: 0,
-          deduped: true
-        }))
-        .setMimeType(ContentService.MimeType.JSON);
+  function isAlreadyApplied() {
+    if (!cacheKey) {
+      return false;
     }
+    // Cache rápido (TTL 6h) + Properties como respaldo más duradero ante reintentos tardíos
+    return cache.get(cacheKey) != null || props.getProperty(cacheKey) != null;
+  }
+
+  function rememberApplied() {
+    if (!cacheKey) {
+      return;
+    }
+    cache.put(cacheKey, "1", 21600); // 6 horas (máx. CacheService)
+    props.setProperty(cacheKey, String(new Date().getTime()));
+  }
+
+  function dedupedResponse() {
+    return ContentService
+      .createTextOutput(JSON.stringify({
+        sheet: sheetName,
+        previousAmount: 0,
+        finalAmount: 0,
+        deduped: true
+      }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+
+  // Idempotencia rápida sin lock
+  if (isAlreadyApplied()) {
+    return dedupedResponse();
   }
 
   lock.waitLock(30000);
   try {
     // Re-check tras adquirir el lock (race entre requests concurrentes)
-    if (operationId) {
-      var cacheKeyLocked = "op_" + operationId;
-      if (cache.get(cacheKeyLocked) != null) {
-        return ContentService
-          .createTextOutput(JSON.stringify({
-            sheet: sheetName,
-            previousAmount: 0,
-            finalAmount: 0,
-            deduped: true
-          }))
-          .setMimeType(ContentService.MimeType.JSON);
-      }
+    if (isAlreadyApplied()) {
+      return dedupedResponse();
     }
 
     var sheet = SpreadsheetApp.openById(spreadsheetId).getSheetByName(sheetName);
@@ -86,9 +95,8 @@ function doPost(request) {
       })).setMimeType(ContentService.MimeType.JSON);
     }
 
-    if (operationId) {
-      cache.put("op_" + operationId, "1", 21600); // 6 horas
-    }
+    // Registrar lo antes posible tras el write (lock aún sostenido)
+    rememberApplied();
 
     return textOutput;
   } finally {

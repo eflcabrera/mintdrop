@@ -8,8 +8,12 @@ import com.eflc.mintdrop.service.sync.OutboxEnqueuer
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 
+/**
+ * Barrido one-shot de la cola outbox. Corre al arrancar la app para reencolar
+ * tareas PENDING cuyo worker de WorkManager ya no existe.
+ */
 @HiltWorker
-class PeriodicSyncWorker @AssistedInject constructor(
+class PendingSyncSchedulerWorker @AssistedInject constructor(
     @Assisted private val context: Context,
     @Assisted params: WorkerParameters,
     private val outboxEnqueuer: OutboxEnqueuer
@@ -17,7 +21,6 @@ class PeriodicSyncWorker @AssistedInject constructor(
 
     override suspend fun doWork(): Result {
         outboxEnqueuer.recoverAndSchedulePendingTasks()
-        outboxEnqueuer.purgeCompletedTasksOlderThan()
         return Result.success()
     }
 }

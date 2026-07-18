@@ -20,6 +20,9 @@ interface EntryHistoryDao {
     @Query("SELECT * FROM entry_history WHERE uid = :entryHistoryId")
     suspend fun getEntryHistory(entryHistoryId: Long): EntryHistory
 
+    @Query("SELECT * FROM entry_history WHERE uid = :entryHistoryId LIMIT 1")
+    suspend fun findEntryHistoryOrNull(entryHistoryId: Long): EntryHistory?
+
     @Query("""
         SELECT * FROM entry_history
         WHERE subcategory_id = :subcategoryId

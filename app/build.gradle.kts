@@ -161,6 +161,11 @@ dependencies {
     val retrofitVersion = "2.9.0"
     val roomVersion = "2.6.0"
     val ychartsVersion = "2.1.0"
+    val hiltVersion = "2.48.1"
+    // 1.2.0+ con KSP genera WorkerAssistedFactory para @HiltWorker
+    val androidxHiltVersion = "1.2.0"
+    val moshiVersion = "1.15.0"
+    val workVersion = "2.9.0"
 
     implementation("androidx.core:core-ktx:1.9.0")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:$viewModelVersion")
@@ -175,20 +180,20 @@ dependencies {
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("androidx.compose.material3:material3")
     implementation("androidx.navigation:navigation-compose:2.5.3")
-    implementation("androidx.hilt:hilt-navigation-compose:1.0.0")
+    implementation("androidx.hilt:hilt-navigation-compose:$androidxHiltVersion")
     implementation("com.google.android.gms:play-services-auth:20.6.0")
     implementation("com.squareup.retrofit2:retrofit:$retrofitVersion")
     implementation("com.squareup.retrofit2:converter-gson:$retrofitVersion")
     implementation("com.squareup.retrofit2:converter-scalars:$retrofitVersion")
-    implementation("com.google.dagger:hilt-android:2.48.1")
-    implementation("androidx.hilt:hilt-work:1.0.0")
-    implementation("com.squareup.moshi:moshi-kotlin:1.15.0")
+    implementation("com.google.dagger:hilt-android:$hiltVersion")
+    implementation("androidx.hilt:hilt-work:$androidxHiltVersion")
+    implementation("com.squareup.moshi:moshi-kotlin:$moshiVersion")
     implementation("com.squareup.retrofit2:converter-moshi:$retrofitVersion")
     implementation("androidx.room:room-ktx:$roomVersion")
     implementation("androidx.room:room-runtime:$roomVersion")
     implementation("androidx.room:room-paging:$roomVersion")
-    implementation("androidx.work:work-runtime-ktx:2.9.0")
-    implementation("co.yml:ycharts:2.1.0")
+    implementation("androidx.work:work-runtime-ktx:$workVersion")
+    implementation("co.yml:ycharts:$ychartsVersion")
 
     // Optimizaciones de rendimiento
     implementation("androidx.compose.runtime:runtime")
@@ -196,9 +201,9 @@ dependencies {
     implementation("androidx.compose.foundation:foundation")
 
     annotationProcessor("androidx.room:room-compiler:$roomVersion")
-    ksp("com.squareup.moshi:moshi-kotlin-codegen:1.15.0")
-    ksp("com.google.dagger:hilt-android-compiler:2.48.1")
-    ksp("androidx.hilt:hilt-compiler:1.0.0")
+    ksp("com.squareup.moshi:moshi-kotlin-codegen:$moshiVersion")
+    ksp("com.google.dagger:hilt-android-compiler:$hiltVersion")
+    ksp("androidx.hilt:hilt-compiler:$androidxHiltVersion")
     ksp("androidx.room:room-compiler:$roomVersion")
 
     testImplementation("junit:junit:4.13.2")

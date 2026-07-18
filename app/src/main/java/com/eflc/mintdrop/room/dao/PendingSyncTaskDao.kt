@@ -75,13 +75,26 @@ interface PendingSyncTaskDao {
     @Query(
         """
         SELECT * FROM pending_sync_task
-        WHERE status = :inProgressStatus AND last_attempt_on < :staleBefore
+        WHERE status = :inProgressStatus
+          AND (last_attempt_on IS NULL OR last_attempt_on < :staleBefore)
         """
     )
     suspend fun getStaleInProgressTasks(
         staleBefore: LocalDateTime,
         inProgressStatus: SyncStatus = SyncStatus.IN_PROGRESS
     ): List<PendingSyncTask>
+
+    @Query(
+        """
+        SELECT COUNT(*) FROM pending_sync_task
+        WHERE entry_history_id = :entryHistoryId
+          AND status = :completedStatus
+        """
+    )
+    suspend fun countCompletedTasksForEntry(
+        entryHistoryId: Long,
+        completedStatus: SyncStatus = SyncStatus.COMPLETED
+    ): Int
 
     @Update
     suspend fun updateTask(task: PendingSyncTask)
