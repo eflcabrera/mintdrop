@@ -126,6 +126,31 @@ interface PendingSyncTaskDao {
         errorMessage: String?
     )
 
+    /**
+     * Claim atómico PENDING/FAILED → IN_PROGRESS.
+     * Evita que un worker "resucite" una tarea ya cancelada a COMPLETED por delete.
+     * @return filas actualizadas (0 = ya no era reclamable)
+     */
+    @Query(
+        """
+        UPDATE pending_sync_task
+        SET status = :inProgressStatus,
+            attempt_count = :attemptCount,
+            last_attempt_on = :lastAttemptOn,
+            error_message = NULL
+        WHERE uid = :taskId
+          AND status IN (:pendingStatus, :failedStatus)
+        """
+    )
+    suspend fun claimTaskForProcessing(
+        taskId: Long,
+        attemptCount: Int,
+        lastAttemptOn: LocalDateTime,
+        inProgressStatus: SyncStatus = SyncStatus.IN_PROGRESS,
+        pendingStatus: SyncStatus = SyncStatus.PENDING,
+        failedStatus: SyncStatus = SyncStatus.FAILED
+    ): Int
+
     @Query(
         """
         UPDATE pending_sync_task 

@@ -115,8 +115,10 @@ class OutboxEnqueuer @Inject constructor(
 
     /**
      * Cancela tareas PENDING/FAILED/IN_PROGRESS del entry.
-     * IN_PROGRESS solo se marca COMPLETED (señal al worker); el UNDO compensatorio
-     * lo encola SyncWorker si el POST ya impactó el Sheet y la entry ya no existe.
+     *
+     * - PENDING/FAILED: cancela el WorkManager y marca COMPLETED (el POST no salió).
+     * - IN_PROGRESS: solo marca COMPLETED como señal cooperativa; **no** cancela el worker
+     *   para que pueda terminar el POST en vuelo y encolar UNDO si hace falta.
      *
      * @return true si hubo un CREATE COMPLETED previo y hace falta UNDO desde delete
      */
@@ -128,17 +130,18 @@ class OutboxEnqueuer @Inject constructor(
         val tasks = db.pendingSyncTaskDao.getActiveTasksByEntryHistoryId(entryHistoryId)
 
         tasks.forEach { task ->
-            workManager.cancelUniqueWork(TASK_WORK_NAME_PREFIX + task.uid)
             when (task.status) {
                 SyncStatus.IN_PROGRESS -> {
+                    // No cancelUniqueWork: el worker debe poder encolar UNDO tras un POST ya enviado
                     db.pendingSyncTaskDao.markAsCompleted(task.uid)
                     Log.w(
                         TAG,
-                        "Create IN_PROGRESS cancelado para entry=$entryHistoryId; " +
+                        "Create IN_PROGRESS señalado como cancelado para entry=$entryHistoryId; " +
                             "UNDO queda a cargo de SyncWorker si el POST ya salió"
                     )
                 }
                 SyncStatus.PENDING, SyncStatus.FAILED -> {
+                    workManager.cancelUniqueWork(TASK_WORK_NAME_PREFIX + task.uid)
                     db.pendingSyncTaskDao.markAsCompleted(task.uid)
                 }
                 else -> Unit

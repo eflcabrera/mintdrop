@@ -44,23 +44,26 @@ class SyncWorker @AssistedInject constructor(
         }
 
         val attemptCount = task.attemptCount + 1
-        pendingSyncTaskDao.updateTaskStatus(
+        val claimed = pendingSyncTaskDao.claimTaskForProcessing(
             taskId = task.uid,
-            status = SyncStatus.IN_PROGRESS,
             attemptCount = attemptCount,
-            lastAttemptOn = LocalDateTime.now(),
-            errorMessage = null
+            lastAttemptOn = LocalDateTime.now()
         )
+        if (claimed == 0) {
+            Log.d(TAG, "Tarea $taskId ya no era reclamable (cancelada o tomada); abortando")
+            return Result.success()
+        }
 
+        var payload: SyncPayload? = null
         return try {
-            val payload = moshi.adapter(SyncPayload::class.java).fromJson(task.payload)
+            payload = moshi.adapter(SyncPayload::class.java).fromJson(task.payload)
                 ?: return handleFailure(task.uid, attemptCount, "Error deserializando payload")
 
             if (task.taskType != SyncTaskType.EXPENSE_ENTRY) {
                 return handleFailure(task.uid, attemptCount, "Tipo de tarea no soportado: ${task.taskType}")
             }
 
-            // deleteRecord puede haber marcado COMPLETED mientras pasábamos a IN_PROGRESS
+            // deleteRecord puede haber marcado COMPLETED mientras reclamábamos
             val latest = pendingSyncTaskDao.getTaskById(taskId)
             if (latest?.status == SyncStatus.COMPLETED) {
                 Log.d(TAG, "Tarea $taskId cancelada antes del POST; abortando")
@@ -78,19 +81,36 @@ class SyncWorker @AssistedInject constructor(
             } else {
                 // Create llegó al Sheet pero la entrada local ya se borró → UNDO compensatorio
                 Log.w(TAG, "Entry ${payload.entryHistoryId} borrada durante sync; encolando UNDO compensatorio")
-                val undoTaskId = outboxEnqueuer.enqueueCompensatingUndoIfNeeded(payload)
-                undoTaskId?.let { outboxEnqueuer.scheduleSync(it) }
+                scheduleCompensatingUndo(payload)
             }
 
             Result.success()
         } catch (e: Exception) {
-            // Si nos cancelaron a COMPLETED mientras corría, no reintentar
+            // Si nos cancelaron a COMPLETED mientras corría, el POST puede haber impactado el Sheet
             val current = pendingSyncTaskDao.getTaskById(taskId)
             if (current?.status == SyncStatus.COMPLETED) {
+                val createPayload = payload
+                    ?: runCatching {
+                        moshi.adapter(SyncPayload::class.java).fromJson(task.payload)
+                    }.getOrNull()
+                if (createPayload != null &&
+                    entryHistoryDao.findEntryHistoryOrNull(createPayload.entryHistoryId) == null
+                ) {
+                    Log.w(
+                        TAG,
+                        "Tarea $taskId cancelada tras posible POST; encolando UNDO compensatorio por seguridad"
+                    )
+                    scheduleCompensatingUndo(createPayload)
+                }
                 return Result.success()
             }
             handleFailure(task.uid, attemptCount, e.message ?: "Error desconocido")
         }
+    }
+
+    private suspend fun scheduleCompensatingUndo(payload: SyncPayload) {
+        val undoTaskId = outboxEnqueuer.enqueueCompensatingUndoIfNeeded(payload)
+        undoTaskId?.let { outboxEnqueuer.scheduleSync(it) }
     }
 
     private suspend fun handleFailure(taskId: Long, attemptCount: Int, errorMessage: String): Result {

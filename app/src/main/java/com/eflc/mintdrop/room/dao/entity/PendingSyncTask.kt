@@ -49,7 +49,7 @@ data class PendingSyncTask(
     val attemptCount: Int = 0,
 
     @ColumnInfo(name = "max_attempts")
-    val maxAttempts: Int = 3,
+    val maxAttempts: Int = DEFAULT_MAX_ATTEMPTS,
 
     @ColumnInfo(name = "created_on")
     val createdOn: LocalDateTime = LocalDateTime.now(),
@@ -62,4 +62,8 @@ data class PendingSyncTask(
 
     @ColumnInfo(name = "completed_on")
     val completedOn: LocalDateTime? = null
-)
+) {
+    companion object {
+        const val DEFAULT_MAX_ATTEMPTS = 5
+    }
+}

@@ -19,7 +19,7 @@ class MigrationFrom6To7 : Migration(6, 7) {
                     `payload` TEXT NOT NULL,
                     `status` TEXT NOT NULL,
                     `attempt_count` INTEGER NOT NULL DEFAULT 0,
-                    `max_attempts` INTEGER NOT NULL DEFAULT 3,
+                    `max_attempts` INTEGER NOT NULL DEFAULT 5,
                     `created_on` TEXT NOT NULL,
                     `last_attempt_on` TEXT,
                     `error_message` TEXT,
