@@ -151,7 +151,7 @@ class OutboxEnqueuer @Inject constructor(
 
     /**
      * Encola UNDO si no hay ya uno activo para el mismo entry.
-     * [createOrUndoPayload] puede ser el create original (se niega) o un undo ya armado.
+     * Niega [originalAmount] para compensar el CREATE en el Sheet.
      */
     suspend fun enqueueUndoIfAbsent(
         entryHistoryId: Long,
@@ -187,11 +187,12 @@ class OutboxEnqueuer @Inject constructor(
                 sheetName = sheetName,
                 month = month,
                 row = row,
-                amount = -kotlin.math.abs(originalAmount),
+                amount = -originalAmount,
                 description = description,
                 isOwedInstallments = false,
                 totalInstallments = 1,
-                paymentMethod = ""
+                paymentMethod = "",
+                isUndo = true
             )
         )
     }
@@ -229,7 +230,8 @@ class OutboxEnqueuer @Inject constructor(
     fun newOperationId(): String = UUID.randomUUID().toString()
 
     private fun isUndoPayload(payload: SyncPayload): Boolean {
-        return payload.description.startsWith("UNDO ") || payload.amount < 0
+        // Prefijo "UNDO " como fallback para tareas ya encoladas antes del flag isUndo
+        return payload.isUndo || payload.description.startsWith("UNDO ")
     }
 
     companion object {

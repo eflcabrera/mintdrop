@@ -26,7 +26,10 @@ data class SyncPayload(
     @Json(name = "totalInstallments")
     val totalInstallments: Int,
     @Json(name = "paymentMethod")
-    val paymentMethod: String
+    val paymentMethod: String,
+    /** Solo para el outbox local; el Sheet no lo usa (compensa por signo del amount). */
+    @Json(name = "isUndo")
+    val isUndo: Boolean = false
 ) {
     fun toExpenseEntryRequest(): ExpenseEntryRequest {
         return ExpenseEntryRequest(
