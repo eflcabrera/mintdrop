@@ -60,6 +60,13 @@ class SyncWorker @AssistedInject constructor(
                 return handleFailure(task.uid, attemptCount, "Tipo de tarea no soportado: ${task.taskType}")
             }
 
+            // deleteRecord puede haber marcado COMPLETED mientras pasábamos a IN_PROGRESS
+            val latest = pendingSyncTaskDao.getTaskById(taskId)
+            if (latest?.status == SyncStatus.COMPLETED) {
+                Log.d(TAG, "Tarea $taskId cancelada antes del POST; abortando")
+                return Result.success()
+            }
+
             val request = payload.toExpenseEntryRequest()
             googleSheetsRepository.postExpense(request)
 

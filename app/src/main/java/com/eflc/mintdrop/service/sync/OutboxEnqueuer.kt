@@ -114,10 +114,11 @@ class OutboxEnqueuer @Inject constructor(
     }
 
     /**
-     * Cancela tareas PENDING/FAILED del entry. Si hay alguna IN_PROGRESS, el POST
-     * puede haber salido o estar en curso → hace falta UNDO compensatorio.
+     * Cancela tareas PENDING/FAILED/IN_PROGRESS del entry.
+     * IN_PROGRESS solo se marca COMPLETED (señal al worker); el UNDO compensatorio
+     * lo encola SyncWorker si el POST ya impactó el Sheet y la entry ya no existe.
      *
-     * @return true si se debe encolar UNDO compensatorio
+     * @return true si hubo un CREATE COMPLETED previo y hace falta UNDO desde delete
      */
     suspend fun cancelActiveTasksForEntry(entryHistoryId: Long): Boolean {
         // Contar COMPLETED *antes* de marcar canceladas (si no, PENDING cancelado cuenta)
@@ -125,15 +126,17 @@ class OutboxEnqueuer @Inject constructor(
             db.pendingSyncTaskDao.countCompletedTasksForEntry(entryHistoryId) > 0
 
         val tasks = db.pendingSyncTaskDao.getActiveTasksByEntryHistoryId(entryHistoryId)
-        var hadInProgress = false
 
         tasks.forEach { task ->
             workManager.cancelUniqueWork(TASK_WORK_NAME_PREFIX + task.uid)
             when (task.status) {
                 SyncStatus.IN_PROGRESS -> {
-                    hadInProgress = true
                     db.pendingSyncTaskDao.markAsCompleted(task.uid)
-                    Log.w(TAG, "Create IN_PROGRESS cancelado para entry=$entryHistoryId; requiere UNDO")
+                    Log.w(
+                        TAG,
+                        "Create IN_PROGRESS cancelado para entry=$entryHistoryId; " +
+                            "UNDO queda a cargo de SyncWorker si el POST ya salió"
+                    )
                 }
                 SyncStatus.PENDING, SyncStatus.FAILED -> {
                     db.pendingSyncTaskDao.markAsCompleted(task.uid)
@@ -142,16 +145,16 @@ class OutboxEnqueuer @Inject constructor(
             }
         }
 
-        val needsCompensatingUndo = hadInProgress || hadPriorCompletedCreate
-        if (needsCompensatingUndo && hadPriorCompletedCreate && !hadInProgress) {
+        if (hadPriorCompletedCreate) {
             Log.w(TAG, "Create COMPLETED previo para entry=$entryHistoryId; requiere UNDO")
         }
-        return needsCompensatingUndo
+        return hadPriorCompletedCreate
     }
 
     /**
-     * Encola UNDO si no hay ya uno activo para el mismo entry.
+     * Encola UNDO si no hay ya uno activo o COMPLETED para el mismo entry.
      * Niega [originalAmount] para compensar el CREATE en el Sheet.
+     * Un UNDO FAILED no bloquea (se puede reencolar).
      */
     suspend fun enqueueUndoIfAbsent(
         entryHistoryId: Long,
@@ -162,14 +165,15 @@ class OutboxEnqueuer @Inject constructor(
         originalAmount: Double,
         originalDescription: String
     ): Long? {
-        val active = db.pendingSyncTaskDao.getActiveTasksByEntryHistoryId(entryHistoryId)
-        val hasActiveUndo = active.any { task ->
+        val tasks = db.pendingSyncTaskDao.getTasksByEntryHistoryId(entryHistoryId)
+        val hasUndoAlready = tasks.any { task ->
+            if (task.status == SyncStatus.FAILED) return@any false
             runCatching {
                 moshi.adapter(SyncPayload::class.java).fromJson(task.payload)?.let { isUndoPayload(it) }
             }.getOrNull() == true
         }
-        if (hasActiveUndo) {
-            Log.d(TAG, "UNDO ya activo para entry=$entryHistoryId; skip")
+        if (hasUndoAlready) {
+            Log.d(TAG, "UNDO ya existe para entry=$entryHistoryId; skip")
             return null
         }
 

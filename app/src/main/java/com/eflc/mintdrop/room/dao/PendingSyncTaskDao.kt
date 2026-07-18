@@ -52,6 +52,15 @@ interface PendingSyncTaskDao {
     @Query(
         """
         SELECT * FROM pending_sync_task
+        WHERE entry_history_id = :entryHistoryId
+        ORDER BY created_on ASC
+        """
+    )
+    suspend fun getTasksByEntryHistoryId(entryHistoryId: Long): List<PendingSyncTask>
+
+    @Query(
+        """
+        SELECT * FROM pending_sync_task
         WHERE entry_history_id = :entryHistoryId AND status = :failedStatus
         ORDER BY created_on DESC
         LIMIT 1

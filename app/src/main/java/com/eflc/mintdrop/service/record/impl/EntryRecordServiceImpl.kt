@@ -127,8 +127,9 @@ class EntryRecordServiceImpl @Inject constructor(
                 subcategoryMonthlyBalanceRepository.saveSubcategoryMonthlyBalance(currentBalance)
             }
 
-            // Si aún no se marcó synced: cancelar create pendiente; si estaba IN_PROGRESS
-            // (o ya COMPLETED) encolar UNDO compensatorio para no dejar monto huérfano en Sheet
+            // Si aún no se marcó synced: cancelar create pendiente/en vuelo.
+            // UNDO desde acá solo si hubo CREATE COMPLETED previo; si estaba IN_PROGRESS,
+            // SyncWorker encola el compensatorio tras un POST que ya impactó el Sheet.
             if (!entryRecord.syncedToSheets) {
                 val needsCompensatingUndo = outboxEnqueuer.cancelActiveTasksForEntry(entryRecord.uid)
                 if (!needsCompensatingUndo) {
