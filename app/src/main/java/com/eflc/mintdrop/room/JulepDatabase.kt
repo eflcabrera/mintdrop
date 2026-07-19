@@ -7,6 +7,7 @@ import com.eflc.mintdrop.room.dao.CategoryDao
 import com.eflc.mintdrop.room.dao.EntryHistoryDao
 import com.eflc.mintdrop.room.dao.ExternalSheetRefDao
 import com.eflc.mintdrop.room.dao.PaymentMethodDao
+import com.eflc.mintdrop.room.dao.PendingSyncTaskDao
 import com.eflc.mintdrop.room.dao.SharedExpenseConfigurationDao
 import com.eflc.mintdrop.room.dao.SharedExpenseConfigurationDetailDao
 import com.eflc.mintdrop.room.dao.SharedExpenseEntryDetailDao
@@ -18,6 +19,7 @@ import com.eflc.mintdrop.room.dao.entity.Category
 import com.eflc.mintdrop.room.dao.entity.EntryHistory
 import com.eflc.mintdrop.room.dao.entity.ExternalSheetRef
 import com.eflc.mintdrop.room.dao.entity.PaymentMethod
+import com.eflc.mintdrop.room.dao.entity.PendingSyncTask
 import com.eflc.mintdrop.room.dao.entity.SharedExpenseConfiguration
 import com.eflc.mintdrop.room.dao.entity.SharedExpenseConfigurationDetail
 import com.eflc.mintdrop.room.dao.entity.SharedExpenseEntryDetail
@@ -38,9 +40,10 @@ import com.eflc.mintdrop.room.dao.entity.SubcategoryRow
         SharedExpenseEntryDetail::class,
         SharedExpenseConfigurationDetail::class,
         SharedExpenseSettlement::class,
-        ExternalSheetRef::class
+        ExternalSheetRef::class,
+        PendingSyncTask::class
     ],
-    version = 6
+    version = 7
 )
 @TypeConverters(Converters::class)
 abstract class JulepDatabase: RoomDatabase() {
@@ -55,4 +58,5 @@ abstract class JulepDatabase: RoomDatabase() {
     abstract val sharedExpenseConfigurationDao: SharedExpenseConfigurationDao
     abstract val sharedExpenseConfigurationDetailDao: SharedExpenseConfigurationDetailDao
     abstract val sharedExpenseEntryDetailDao: SharedExpenseEntryDetailDao
+    abstract val pendingSyncTaskDao: PendingSyncTaskDao
 }

@@ -12,4 +12,5 @@ interface EntryRecordService {
     suspend fun calculateSharedExpenseBalance(pendingSharedExpenses: List<EntryRecordAndSharedExpenseDetails>): SharedExpenseBalanceData
     suspend fun getPendingSharedExpenses(): List<EntryRecordAndSharedExpenseDetails>
     suspend fun settleSharedExpenseBalance(balance: Double, pendingSharedExpenses: List<EntryRecordAndSharedExpenseDetails>): ExpenseEntryResponse?
+    suspend fun retryFailedSync(entryHistoryId: Long): Boolean
 }

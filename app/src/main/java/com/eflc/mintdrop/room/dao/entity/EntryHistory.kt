@@ -44,5 +44,7 @@ data class EntryHistory(
     @ColumnInfo(name = "paid_by")
     val paidBy: Long? = null,
     @ColumnInfo(name = "is_settled")
-    var isSettled: Boolean? = null
+    var isSettled: Boolean? = null,
+    @ColumnInfo(name = "synced_to_sheets")
+    val syncedToSheets: Boolean = false
 )

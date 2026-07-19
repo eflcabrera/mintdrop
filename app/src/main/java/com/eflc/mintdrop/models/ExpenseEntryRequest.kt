@@ -5,6 +5,8 @@ import com.squareup.moshi.JsonClass
 
 @JsonClass(generateAdapter = true)
 data class ExpenseEntryRequest(
+    @Json(name = "operationId")
+    val operationId: String,
     @Json(name = "spreadsheet_id")
     val spreadsheetId: String,
     @Json(name = "sheet")

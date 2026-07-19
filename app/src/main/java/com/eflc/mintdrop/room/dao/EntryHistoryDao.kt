@@ -7,6 +7,7 @@ import androidx.room.Transaction
 import androidx.room.Upsert
 import com.eflc.mintdrop.room.dao.entity.EntryHistory
 import com.eflc.mintdrop.room.dao.entity.relationship.EntryRecordAndSharedExpenseDetails
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface EntryHistoryDao {
@@ -19,6 +20,9 @@ interface EntryHistoryDao {
     @Query("SELECT * FROM entry_history WHERE uid = :entryHistoryId")
     suspend fun getEntryHistory(entryHistoryId: Long): EntryHistory
 
+    @Query("SELECT * FROM entry_history WHERE uid = :entryHistoryId LIMIT 1")
+    suspend fun findEntryHistoryOrNull(entryHistoryId: Long): EntryHistory?
+
     @Query("""
         SELECT * FROM entry_history
         WHERE subcategory_id = :subcategoryId
@@ -26,6 +30,14 @@ interface EntryHistoryDao {
         LIMIT :limit
     """)
     fun getEntryHistoryBySubcategoryIdOrderByDate(subcategoryId: Long, limit: Int): List<EntryHistory>
+
+    @Query("""
+        SELECT * FROM entry_history
+        WHERE subcategory_id = :subcategoryId
+        ORDER BY date DESC
+        LIMIT :limit
+    """)
+    fun observeEntryHistoryBySubcategoryIdOrderByDate(subcategoryId: Long, limit: Int): Flow<List<EntryHistory>>
 
     @Query("""
         SELECT * from entry_history
@@ -38,4 +50,7 @@ interface EntryHistoryDao {
     @Query("SELECT * FROM entry_history WHERE is_settled = 0")
     @Transaction
     fun getEntryRecordsWithUnsettledSharedExpenses(): List<EntryRecordAndSharedExpenseDetails>
+    
+    @Query("UPDATE entry_history SET synced_to_sheets = 1 WHERE uid = :entryHistoryId")
+    suspend fun markAsSyncedToSheets(entryHistoryId: Long)
 }

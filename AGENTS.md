@@ -52,7 +52,7 @@ Para una descripción detallada de cada paquete, ver la sección [Arquitectura](
 
 ### API / Sincronización
 
-1. La sincronización Room ↔ Sheet **no es atómica** hoy (gap G-04). Si vas a tocar `EntryRecordServiceImpl`, no empeores la situación: idealmente implementá patrón **outbox** + `WorkManager`.
+1. La sincronización Room ↔ Sheet usa **transactional outbox** (`pending_sync_task` + WorkManager) con reintentos e idempotencia por `operationId` (SPEC-013 / gap G-04 mitigado). No empeorar el patrón al tocar `EntryRecordServiceImpl`.
 2. **No** llamar a la API desde composables. **Sí** desde ViewModel/Service vía Repository.
 3. Mantener `db.withTransaction { ... }` para operaciones que afectan más de una entidad.
 4. **No** inventar nuevas URLs ni endpoints sin actualizar también el `.gs` de referencia (en `api/reference/`).
@@ -125,7 +125,7 @@ Resumen priorizado (lista completa en esta sección):
 | G-01 | Alta | `CoroutineScope` singleton cancelado en `onCleared()` |
 | G-02 | Alta | NPE si no hay `external_sheet_ref` para el año actual |
 | G-03 | Alta | Falta migración 1→2 |
-| G-04 | Alta | Sync Room↔Sheet no atómica (sin outbox/retry) |
+| G-04 | Mitigado | Outbox + WorkManager + idempotencia `operationId` (SPEC-013); Sheet sigue siendo backend remoto |
 | G-05 | Alta | `_error` flow no se observa en UI |
 | G-06 | Alta | Varias queries DAO no son `suspend` |
 | G-07 | Media | Rebrand MintDrop → Julep incompleto |
@@ -139,6 +139,7 @@ Resumen priorizado (lista completa en esta sección):
 | G-15 | Media | Gson + Moshi + JSON-en-deeplink |
 | G-16 | Media | `iconRef` modelado pero no usado |
 | G-17 | Media | `formState` no `rememberSaveable` |
+| G-18 | Alta | Sheet usado como backend transaccional; falta backend propio (raíz de G-02/G-04, idempotencia, concurrencia entre usuarios y auth) |
 | T-01 | Baja | Cobertura de tests = 0 |
 
 ---

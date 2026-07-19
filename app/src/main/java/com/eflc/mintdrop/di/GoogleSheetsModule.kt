@@ -2,6 +2,8 @@ package com.eflc.mintdrop.di
 
 import com.eflc.mintdrop.api.GoogleSheetsAPI
 import com.eflc.mintdrop.utils.Constants
+import com.squareup.moshi.Moshi
+import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -23,9 +25,17 @@ object GoogleSheetsModule {
 
     @Provides
     @Singleton
-    fun provideRetrofit(): Retrofit.Builder{
+    fun provideMoshi(): Moshi {
+        return Moshi.Builder()
+            .addLast(KotlinJsonAdapterFactory())
+            .build()
+    }
+
+    @Provides
+    @Singleton
+    fun provideRetrofit(moshi: Moshi): Retrofit.Builder{
         return Retrofit.Builder()
             .baseUrl(Constants.BASE_URL)
-            .addConverterFactory(MoshiConverterFactory.create())
+            .addConverterFactory(MoshiConverterFactory.create(moshi))
     }
 }

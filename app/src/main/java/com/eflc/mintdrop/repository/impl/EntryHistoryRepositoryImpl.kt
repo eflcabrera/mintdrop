@@ -4,6 +4,7 @@ import com.eflc.mintdrop.repository.EntryHistoryRepository
 import com.eflc.mintdrop.room.dao.EntryHistoryDao
 import com.eflc.mintdrop.room.dao.entity.EntryHistory
 import com.eflc.mintdrop.room.dao.entity.relationship.EntryRecordAndSharedExpenseDetails
+import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
 class EntryHistoryRepositoryImpl @Inject constructor(
@@ -19,6 +20,10 @@ class EntryHistoryRepositoryImpl @Inject constructor(
 
     override suspend fun findEntryHistoryBySubcategoryId(subcategoryId: Long, maxResults: Int): List<EntryHistory> {
         return dao.getEntryHistoryBySubcategoryIdOrderByDate(subcategoryId, maxResults)
+    }
+
+    override fun observeEntryHistoryBySubcategoryId(subcategoryId: Long, maxResults: Int): Flow<List<EntryHistory>> {
+        return dao.observeEntryHistoryBySubcategoryIdOrderByDate(subcategoryId, maxResults)
     }
 
     override suspend fun findLastEntry(): EntryHistory {

@@ -10,5 +10,7 @@ data class ExpenseEntryResponse(
     @Json(name = "previousAmount")
     val previousAmount: Double,
     @Json(name = "finalAmount")
-    val finalAmount: Double
+    val finalAmount: Double,
+    @Json(name = "deduped")
+    val deduped: Boolean? = null
 )

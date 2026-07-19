@@ -1,6 +1,7 @@
 package com.eflc.mintdrop.ui.components.card
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -11,7 +12,12 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material3.Card
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -21,8 +27,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -30,6 +36,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.eflc.mintdrop.R
+import com.eflc.mintdrop.models.EntrySyncUiState
 import com.eflc.mintdrop.room.dao.entity.EntryHistory
 import com.eflc.mintdrop.room.dao.entity.PaymentMethod
 import com.eflc.mintdrop.room.dao.entity.PaymentMethodType
@@ -45,36 +52,39 @@ fun EntryHistoryCard(
     entryRecord: EntryHistory,
     paymentMethods: List<PaymentMethod>? = listOf(),
     sharedExpenseDetails: List<SharedExpenseEntryDetail>? = listOf(),
-    onLongPress: (() -> Unit)? = null
+    syncState: EntrySyncUiState = if (entryRecord.syncedToSheets) EntrySyncUiState.SYNCED else EntrySyncUiState.PENDING,
+    onLongPress: (() -> Unit)? = null,
+    onRetrySync: (() -> Unit)? = null
 ) {
-    // Valores memoizados para evitar recálculos en cada recomposición
     val description by remember(entryRecord.description) {
         derivedStateOf { entryRecord.description.ifBlank { "???" } }
     }
-    
+
     val formattedDate by remember(entryRecord.date) {
-        derivedStateOf { 
+        derivedStateOf {
             entryRecord.date.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
         }
     }
-    
+
     val formattedAmount by remember(entryRecord.amount) {
         derivedStateOf { formatAsCurrency(entryRecord.amount) }
     }
-    
+
     val paymentMethod by remember(entryRecord.paymentMethodId, paymentMethods) {
-        derivedStateOf { 
+        derivedStateOf {
             paymentMethods?.find { it.uid == entryRecord.paymentMethodId }
         }
     }
-    
+
     val hasSharedExpenseDetails by remember(sharedExpenseDetails) {
         derivedStateOf { !sharedExpenseDetails.isNullOrEmpty() }
     }
-    
-    // Constantes memoizadas
+
     val colorSharedGreen = remember { Color(54, 180, 103) }
     val colorCreditCard = remember { Color(66, 135, 245) }
+    val colorSynced = remember { Color(54, 180, 103) }
+    val colorPending = remember { Color(255, 152, 0) }
+    val colorFailed = remember { Color(211, 47, 47) }
 
     return Card(
         shape = MaterialTheme.shapes.extraSmall,
@@ -109,7 +119,51 @@ fun EntryHistoryCard(
                     maxLines = 1,
                     modifier = Modifier.width(170.dp)
                 )
-                Text(text = formattedDate, fontSize = 12.sp)
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Start
+                ) {
+                    Text(text = formattedDate, fontSize = 12.sp)
+                    when (syncState) {
+                        EntrySyncUiState.SYNCED -> {
+                            Icon(
+                                imageVector = Icons.Filled.CheckCircle,
+                                contentDescription = "Sincronizado",
+                                tint = colorSynced,
+                                modifier = Modifier
+                                    .size(16.dp)
+                                    .padding(start = 6.dp)
+                            )
+                        }
+                        EntrySyncUiState.PENDING -> {
+                            Icon(
+                                imageVector = Icons.Outlined.CheckCircle,
+                                contentDescription = "Pendiente de sincronización",
+                                tint = colorPending,
+                                modifier = Modifier
+                                    .size(16.dp)
+                                    .padding(start = 6.dp)
+                            )
+                        }
+                        EntrySyncUiState.FAILED -> {
+                            Icon(
+                                imageVector = Icons.Filled.Warning,
+                                contentDescription = "Error de sincronización. Tocar para reintentar",
+                                tint = colorFailed,
+                                modifier = Modifier
+                                    .size(16.dp)
+                                    .padding(start = 6.dp)
+                                    .then(
+                                        if (onRetrySync != null) {
+                                            Modifier.clickable { onRetrySync() }
+                                        } else {
+                                            Modifier
+                                        }
+                                    )
+                            )
+                        }
+                    }
+                }
             }
             Column(
                 horizontalAlignment = Alignment.End,
@@ -149,7 +203,7 @@ fun EntryHistoryCard(
                                 derivedStateOf {
                                     val myDetail = sharedExpenseDetails?.find { it.userId == MY_USER_ID }
                                     val theirDetail = sharedExpenseDetails?.filter { it.userId != MY_USER_ID } ?: emptyList()
-                                    
+
                                     if (myDetail != null) {
                                         if (MY_USER_ID != entryRecord.paidBy) {
                                             val split = myDetail.split.times(-1)
@@ -165,7 +219,7 @@ fun EntryHistoryCard(
                                     }
                                 }
                             }
-                            
+
                             if (splitInfo.third) {
                                 val (split, color, _) = splitInfo
                                 Text(
@@ -194,7 +248,8 @@ fun EntryHistoryCard(
 @Preview(showBackground = true)
 @Composable
 fun EntryHistoryCardPreview() {
-    EntryHistoryCard(modifier = Modifier.width(320.dp),
+    EntryHistoryCard(
+        modifier = Modifier.width(320.dp),
         entryRecord = EntryHistory(
             subcategoryId = 1L,
             date = LocalDateTime.now(),
@@ -204,7 +259,8 @@ fun EntryHistoryCardPreview() {
             isShared = true,
             paymentMethodId = 1,
             isSettled = false,
-            paidBy = 1L
+            paidBy = 1L,
+            syncedToSheets = false
         ),
         paymentMethods = listOf(PaymentMethod(1, "Crédito", PaymentMethodType.CREDIT_CARD)),
         sharedExpenseDetails = listOf(
@@ -221,6 +277,8 @@ fun EntryHistoryCardPreview() {
                 split = 50000.00
             )
         ),
-        onLongPress = { /* Preview no necesita funcionalidad */ }
+        syncState = EntrySyncUiState.FAILED,
+        onLongPress = { },
+        onRetrySync = { }
     )
 }
