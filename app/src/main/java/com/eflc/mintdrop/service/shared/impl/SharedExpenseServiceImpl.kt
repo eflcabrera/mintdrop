@@ -52,50 +52,36 @@ class SharedExpenseServiceImpl @Inject constructor(
         sharedExpenseRepository.deleteSharedExpenseEntryDetailsByEntryRecordId(sharedEntryRecord.uid)
     }
 
-    override suspend fun createBalanceSettlement(
-        balance: Double,
-        pendingSharedExpenses: List<EntryRecordAndSharedExpenseDetails>
-    ): EntryHistory {
-        return db.withTransaction {
-            val operationType: TransferOperationType
-            val settlementEntrySubcategoryId: Long
-
-            if (balance > 0.0) {
-                operationType = TransferOperationType.CREDIT
-                settlementEntrySubcategoryId = Constants.DEFAULT_SETTLE_CREDIT_SUBCAT
-            } else {
-                operationType = TransferOperationType.DEBIT
-                settlementEntrySubcategoryId = Constants.DEFAULT_SETTLE_DEBIT_SUBCAT
-            }
-
-            val settlement = SharedExpenseSettlement(
-                settlementDate = LocalDateTime.now(),
-                amount = balance.absoluteValue,
-                type = operationType,
-                userId = Constants.MY_USER_ID
-            )
-
-            val settlementId = sharedExpenseRepository.saveSharedExpenseSettlement(settlement)
-
-            pendingSharedExpenses.forEach { recordAndSharedExpenses ->
-                recordAndSharedExpenses.entryRecord.isSettled = true
-                recordAndSharedExpenses.entryRecord.lastModified = LocalDateTime.now()
-                recordAndSharedExpenses.sharedExpenseDetails.forEach {
-                    it.settlementId = settlementId
-                    sharedExpenseRepository.saveSharedExpenseEntryDetail(it)
-                }
-                entryHistoryRepository.saveEntryHistory(recordAndSharedExpenses.entryRecord)
-            }
-
-            return@withTransaction EntryHistory(
-                subcategoryId = settlementEntrySubcategoryId,
-                amount = balance.absoluteValue,
-                description = "Saldo de balance",
-                lastModified = LocalDateTime.now(),
-                isShared = false,
-                date = LocalDateTime.now()
-            )
+    override suspend fun saveSettlementAndMarkSettled(
+        pendingSharedExpenses: List<EntryRecordAndSharedExpenseDetails>,
+        netBalance: Double
+    ): Long {
+        val operationType = if (netBalance > 0.0) {
+            TransferOperationType.CREDIT
+        } else {
+            TransferOperationType.DEBIT
         }
+
+        val settlement = SharedExpenseSettlement(
+            settlementDate = LocalDateTime.now(),
+            amount = netBalance.absoluteValue,
+            type = operationType,
+            userId = Constants.MY_USER_ID
+        )
+
+        val settlementId = sharedExpenseRepository.saveSharedExpenseSettlement(settlement)
+
+        pendingSharedExpenses.forEach { recordAndSharedExpenses ->
+            recordAndSharedExpenses.entryRecord.isSettled = true
+            recordAndSharedExpenses.entryRecord.lastModified = LocalDateTime.now()
+            recordAndSharedExpenses.sharedExpenseDetails.forEach {
+                it.settlementId = settlementId
+                sharedExpenseRepository.saveSharedExpenseEntryDetail(it)
+            }
+            entryHistoryRepository.saveEntryHistory(recordAndSharedExpenses.entryRecord)
+        }
+
+        return settlementId
     }
 
     // Move this to a strategy pattern
@@ -110,5 +96,4 @@ class SharedExpenseServiceImpl @Inject constructor(
         }
         return splitMap
     }
-
 }

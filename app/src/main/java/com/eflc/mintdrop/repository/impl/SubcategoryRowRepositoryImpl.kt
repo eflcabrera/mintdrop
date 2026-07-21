@@ -15,4 +15,8 @@ class SubcategoryRowRepositoryImpl @Inject constructor(
     override suspend fun findRowBySubcategoryId(subcategoryId: Long): SubcategoryRow {
         return dao.findSubcategoryRowBySubcategoryId(subcategoryId)
     }
+
+    override suspend fun findRowBySubcategoryIdOrNull(subcategoryId: Long): SubcategoryRow? {
+        return dao.findSubcategoryRowOrNull(subcategoryId)
+    }
 }

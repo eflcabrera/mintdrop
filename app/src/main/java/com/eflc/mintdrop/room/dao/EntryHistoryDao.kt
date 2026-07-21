@@ -50,6 +50,26 @@ interface EntryHistoryDao {
     @Query("SELECT * FROM entry_history WHERE is_settled = 0")
     @Transaction
     fun getEntryRecordsWithUnsettledSharedExpenses(): List<EntryRecordAndSharedExpenseDetails>
+
+    @Query(
+        """
+        SELECT * FROM entry_history
+        WHERE description LIKE :pattern
+          AND synced_to_sheets = 0
+        ORDER BY date DESC
+        """
+    )
+    suspend fun getUnsyncedSettleEntries(pattern: String): List<EntryHistory>
+
+    @Query(
+        """
+        SELECT * FROM entry_history
+        WHERE description LIKE :pattern
+          AND synced_to_sheets = 0
+        ORDER BY date DESC
+        """
+    )
+    fun observeUnsyncedSettleEntries(pattern: String): Flow<List<EntryHistory>>
     
     @Query("UPDATE entry_history SET synced_to_sheets = 1 WHERE uid = :entryHistoryId")
     suspend fun markAsSyncedToSheets(entryHistoryId: Long)
