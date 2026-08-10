@@ -12,4 +12,7 @@ interface SubcategoryRowDao {
 
     @Query("SELECT * FROM subcategory_row WHERE subcategory_id = :subcategoryId LIMIT 1")
     fun findSubcategoryRowBySubcategoryId(subcategoryId: Long): SubcategoryRow
+
+    @Query("SELECT * FROM subcategory_row WHERE subcategory_id = :subcategoryId LIMIT 1")
+    suspend fun findSubcategoryRowOrNull(subcategoryId: Long): SubcategoryRow?
 }

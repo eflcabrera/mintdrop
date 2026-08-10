@@ -12,4 +12,6 @@ interface EntryHistoryRepository {
     suspend fun findLastEntry(): EntryHistory
     suspend fun deleteEntryHistory(entryHistory: EntryHistory)
     suspend fun getPendingSharedExpenses(): List<EntryRecordAndSharedExpenseDetails>
+    suspend fun getUnsyncedSettleEntries(): List<EntryHistory>
+    fun observeUnsyncedSettleEntries(): Flow<List<EntryHistory>>
 }

@@ -27,8 +27,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -53,6 +55,11 @@ data class BottomNavigationItem(
 @Composable
 fun HomeScreen(navController: NavHostController = rememberNavController()) {
     val homeViewModel: HomeViewModel = hiltViewModel()
+    val context = LocalContext.current
+    val versionLabel = remember {
+        val info = context.packageManager.getPackageInfo(context.packageName, 0)
+        "v${info.versionName}"
+    }
     val items = listOf(
         BottomNavigationItem(Constants.EXPENSE_SHEET_NAME, AppScreens.ExpenseScreen.route, Icons.Filled.ShoppingCart, Icons.Outlined.ShoppingCart),
         BottomNavigationItem(Constants.SHARED_EXPENSE_SHEET_NAME, AppScreens.SharedExpensesScreen.route, Icons.Filled.Favorite, Icons.Outlined.Favorite),
@@ -79,9 +86,17 @@ fun HomeScreen(navController: NavHostController = rememberNavController()) {
     Scaffold(
         topBar = {
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.End
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 12.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
+                Text(
+                    text = versionLabel,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
                 SmallFloatingActionButton(
                     onClick = {
                         homeViewModel.getLastEntry()

@@ -36,6 +36,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import com.eflc.mintdrop.models.SettleSyncAggregateState
 import com.eflc.mintdrop.ui.components.card.EntryHistoryCard
 import com.eflc.mintdrop.ui.components.dialog.ConfirmationEntryDialog
 import com.eflc.mintdrop.utils.Constants
@@ -55,12 +56,17 @@ fun SharedExpensesScreen(navComposable: NavController) {
 
     val sharedExpenseBalance by sharedExpensesViewModel.sharedExpenseBalanceData.collectAsState()
     val sharedExpenses by sharedExpensesViewModel.sharedExpenses.collectAsState()
+    val unsyncedSettleEntries by sharedExpensesViewModel.unsyncedSettleEntries.collectAsState()
+    val settleSyncState by sharedExpensesViewModel.settleSyncState.collectAsState()
+    val failedSyncEntryIds by sharedExpensesViewModel.failedSyncEntryIds.collectAsState()
     val isSaving by sharedExpensesViewModel.isSaving.collectAsState()
+    val settleError by sharedExpensesViewModel.settleError.collectAsState()
     val shouldShowSettlementDialog = remember { mutableStateOf(false) }
     val pdfError by sharedExpensesViewModel.pdfError.collectAsState()
     val pdfMessage by sharedExpensesViewModel.pdfMessage.collectAsState()
     val context = LocalContext.current
 
+    val showingSettleQueue = unsyncedSettleEntries.isNotEmpty()
     val myUserSplit = sharedExpenseBalance.splits.find { it.userId == MY_USER_ID }
     var currentBalance = 0.0
     myUserSplit?.let {
@@ -68,6 +74,8 @@ fun SharedExpensesScreen(navComposable: NavController) {
     }
     val sheet = Constants.SHARED_EXPENSE_SHEET_NAME
     val resultOperationCaption = if (currentBalance < 0.0) "debitarán" else "acreditarán"
+    val settleEnabled = sharedExpensesViewModel.isSettleButtonEnabled(currentBalance)
+    val showRetry = sharedExpensesViewModel.shouldShowRetryButton()
 
     if (shouldShowSettlementDialog.value) {
         ConfirmationEntryDialog(
@@ -97,39 +105,74 @@ fun SharedExpensesScreen(navComposable: NavController) {
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center
                 ) {
-                    Text(
-                        text = "Balance actual: ${FormatUtils.formatAsCurrency(currentBalance)}",
-                        fontWeight = FontWeight.Light,
-                        modifier = Modifier.padding(bottom = 16.dp)
-                    )
+                    if (showingSettleQueue) {
+                        Text(
+                            text = when (settleSyncState) {
+                                SettleSyncAggregateState.ALL_FAILED ->
+                                    "Liquidación con errores de sincronización"
+                                else ->
+                                    "Liquidación sincronizando..."
+                            },
+                            fontWeight = FontWeight.Light,
+                            modifier = Modifier.padding(bottom = 16.dp)
+                        )
+                    } else {
+                        Text(
+                            text = "Balance actual: ${FormatUtils.formatAsCurrency(currentBalance)}",
+                            fontWeight = FontWeight.Light,
+                            modifier = Modifier.padding(bottom = 16.dp)
+                        )
+                    }
                     Divider(
                         thickness = 1.dp,
                         modifier = Modifier.padding(bottom = 16.dp)
                     )
-                    Button(
-                        onClick = {
-                            shouldShowSettlementDialog.value = true
-                        },
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(160, 221, 230)),
-                        enabled = currentBalance != 0.0,
-                        modifier = Modifier
-                            .padding(bottom = 10.dp)
-                            .height(50.dp)
-                    ) {
-                        Text(text = "Saldar cuentas", color = Color.Black)
+                    if (showRetry) {
+                        Button(
+                            onClick = { sharedExpensesViewModel.retryFailedSettleSyncs() },
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(211, 47, 47)),
+                            modifier = Modifier
+                                .padding(bottom = 10.dp)
+                                .height(50.dp)
+                        ) {
+                            Text(text = "Reintentar sincronización", color = Color.White)
+                        }
+                    } else {
+                        Button(
+                            onClick = {
+                                shouldShowSettlementDialog.value = true
+                            },
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(160, 221, 230)),
+                            enabled = settleEnabled,
+                            modifier = Modifier
+                                .padding(bottom = 10.dp)
+                                .height(50.dp)
+                        ) {
+                            Text(text = "Saldar cuentas", color = Color.Black)
+                        }
                     }
-                    
+
                     // Botón para generar y compartir PDF
                     Button(
                         onClick = {
                             sharedExpensesViewModel.generateAndSharePdf(context)
                         },
                         colors = ButtonDefaults.buttonColors(containerColor = Color(54, 180, 103)),
+                        enabled = !showingSettleQueue && sharedExpenses.isNotEmpty(),
                         modifier = Modifier
                             .padding(bottom = 10.dp)
                             .height(50.dp)
                     ) {
                         Text(text = "Generar y Compartir PDF", color = Color.Black)
+                    }
+
+                    settleError?.let { error ->
+                        Text(
+                            text = error,
+                            color = Color.Red,
+                            fontSize = 12.sp,
+                            modifier = Modifier.padding(top = 5.dp)
+                        )
                     }
 
                     pdfError?.let { error ->
@@ -140,7 +183,7 @@ fun SharedExpensesScreen(navComposable: NavController) {
                             modifier = Modifier.padding(top = 5.dp)
                         )
                     }
-                    
+
                     pdfMessage?.let { message ->
                         Text(
                             text = message,
@@ -168,6 +211,17 @@ fun SharedExpensesScreen(navComposable: NavController) {
                         .padding(bottom = 14.dp),
                     color = MaterialTheme.colorScheme.secondary
                 )
+            } else if (showingSettleQueue) {
+                unsyncedSettleEntries.forEach { entry ->
+                    val syncState = remember(entry.syncedToSheets, entry.uid, failedSyncEntryIds) {
+                        sharedExpensesViewModel.syncStateFor(entry)
+                    }
+                    EntryHistoryCard(
+                        Modifier,
+                        entry,
+                        syncState = syncState
+                    )
+                }
             } else {
                 sharedExpenses.forEach {
                     EntryHistoryCard(Modifier, it.entryRecord, sharedExpenseDetails = it.sharedExpenseDetails)

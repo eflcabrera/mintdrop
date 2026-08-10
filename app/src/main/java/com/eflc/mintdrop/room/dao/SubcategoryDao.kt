@@ -17,6 +17,9 @@ interface SubcategoryDao {
     @Query("SELECT * FROM subcategory WHERE uid = :subcategoryId")
     suspend fun getSubcategory(subcategoryId: Long): Subcategory
 
+    @Query("SELECT * FROM subcategory WHERE uid = :subcategoryId LIMIT 1")
+    suspend fun findSubcategoryOrNull(subcategoryId: Long): Subcategory?
+
     @Transaction
     @Query("SELECT * FROM subcategory WHERE category_id = :categoryId ORDER BY uid ASC")
     fun getSubcategoriesByCategoryId(categoryId: Long): List<SubcategoryAndSubcategoryRow>

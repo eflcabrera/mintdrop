@@ -43,6 +43,29 @@ data class BuildOptimizationConfig(
     val enableBuildCache: Boolean
 )
 
+/**
+ * Suffix de versionName para builds debug: "-<sha>" o "-<sha>-dirty".
+ * Se hornea en el APK en compile-time para poder contrastar con git rev-parse.
+ */
+fun gitVersionSuffix(): String {
+    fun runGit(vararg args: String): String {
+        return try {
+            val process = ProcessBuilder("git", *args)
+                .redirectErrorStream(true)
+                .start()
+            val output = process.inputStream.bufferedReader().readText().trim()
+            process.waitFor()
+            if (process.exitValue() == 0) output else ""
+        } catch (_: Exception) {
+            ""
+        }
+    }
+
+    val sha = runGit("rev-parse", "--short", "HEAD").ifBlank { "unknown" }
+    val dirty = runGit("status", "--porcelain").isNotBlank()
+    return if (dirty) "-$sha-dirty" else "-$sha"
+}
+
 android {
     namespace = "com.eflc.mintdrop"
     compileSdk = 34
@@ -79,6 +102,7 @@ android {
             isMinifyEnabled = false
             isShrinkResources = false
             manifestPlaceholders["enableCrashReporting"] = "false"
+            versionNameSuffix = gitVersionSuffix()
         }
     }
     
