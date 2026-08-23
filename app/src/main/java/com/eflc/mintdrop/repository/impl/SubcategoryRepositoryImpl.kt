@@ -6,6 +6,7 @@ import com.eflc.mintdrop.room.dao.SubcategoryDao
 import com.eflc.mintdrop.room.dao.entity.Subcategory
 import com.eflc.mintdrop.room.dao.entity.relationship.SubcategoryAndEntryHistory
 import com.eflc.mintdrop.room.dao.entity.relationship.SubcategoryAndSubcategoryRow
+import java.time.LocalDateTime
 import javax.inject.Inject
 
 class SubcategoryRepositoryImpl @Inject constructor(
@@ -33,5 +34,13 @@ class SubcategoryRepositoryImpl @Inject constructor(
 
     override suspend fun findLastSubcategoriesUsed(amount: Int): List<SubcategoryAndSubcategoryRow> {
         return dao.getLastXSubcategoriesOrderedByLastEntry(amount)
+    }
+
+    override suspend fun deleteSubcategory(subcategory: Subcategory) {
+        dao.deleteSubcategory(subcategory)
+    }
+
+    override suspend fun updateSubcategoryName(subcategoryId: Long, newName: String) {
+        dao.updateSubcategoryName(subcategoryId, newName, LocalDateTime.now().toString())
     }
 }
