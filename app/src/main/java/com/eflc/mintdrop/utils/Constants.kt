@@ -12,4 +12,5 @@ object Constants {
     const val THEIR_USER_ID = 2L
     const val DEFAULT_SETTLE_DEBIT_SUBCAT = 29L
     const val DEFAULT_SETTLE_CREDIT_SUBCAT = 120L
+    const val SETTLE_DESCRIPTION_PREFIX = "SETTLE "
 }

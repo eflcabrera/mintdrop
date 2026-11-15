@@ -37,4 +37,16 @@ class EntryHistoryRepositoryImpl @Inject constructor(
     override suspend fun getPendingSharedExpenses(): List<EntryRecordAndSharedExpenseDetails> {
         return dao.getEntryRecordsWithUnsettledSharedExpenses()
     }
+
+    override suspend fun getUnsyncedSettleEntries(): List<EntryHistory> {
+        return dao.getUnsyncedSettleEntries(SETTLE_LIKE_PATTERN)
+    }
+
+    override fun observeUnsyncedSettleEntries(): Flow<List<EntryHistory>> {
+        return dao.observeUnsyncedSettleEntries(SETTLE_LIKE_PATTERN)
+    }
+
+    companion object {
+        private const val SETTLE_LIKE_PATTERN = "SETTLE %"
+    }
 }

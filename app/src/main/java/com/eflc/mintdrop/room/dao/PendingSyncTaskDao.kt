@@ -38,6 +38,20 @@ interface PendingSyncTaskDao {
     @Query(
         """
         SELECT * FROM pending_sync_task
+        WHERE entry_history_id IN (:entryHistoryIds)
+          AND status IN (:pending, :inProgress, :failed)
+        """
+    )
+    suspend fun getActiveTasksForEntryHistoryIds(
+        entryHistoryIds: List<Long>,
+        pending: SyncStatus = SyncStatus.PENDING,
+        inProgress: SyncStatus = SyncStatus.IN_PROGRESS,
+        failed: SyncStatus = SyncStatus.FAILED
+    ): List<PendingSyncTask>
+
+    @Query(
+        """
+        SELECT * FROM pending_sync_task
         WHERE entry_history_id = :entryHistoryId
           AND status IN (:pending, :inProgress, :failed)
         """
