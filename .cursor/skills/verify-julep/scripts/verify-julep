@@ -1,0 +1,608 @@
+#!/usr/bin/env bash
+# Drive an isolated Julep emulator. Kill only the pid recorded by launch.
+set -euo pipefail
+trap 'echo "verify-julep: failed at line $LINENO" >&2' ERR
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SKILL_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+REPO_ROOT="$(cd "$SKILL_DIR/../../.." && pwd)"
+
+VERIFY_HOME="${JULEP_VERIFY_HOME:-$HOME/.julep-verify}"
+PORT="${JULEP_VERIFY_PORT:-5574}"
+AVD_NAME="${JULEP_VERIFY_AVD:-julep-verify}"
+PACKAGE="com.eflc.mintdrop"
+ACTIVITY="com.eflc.mintdrop/.activities.MainActivity"
+SERIAL="emulator-${PORT}"
+STATE_FILE="$VERIFY_HOME/run/state.env"
+EVIDENCE_ROOT="$SKILL_DIR/artifacts"
+
+if [[ -z "${ANDROID_HOME:-}" && -f "$REPO_ROOT/local.properties" ]]; then
+  ANDROID_HOME="$(sed -n 's/^sdk.dir=//p' "$REPO_ROOT/local.properties" | head -1)"
+fi
+ANDROID_HOME="${ANDROID_HOME:-$HOME/Library/Android/sdk}"
+ANDROID_SDK_ROOT="$ANDROID_HOME"
+export ANDROID_HOME ANDROID_SDK_ROOT
+export ANDROID_AVD_HOME="$VERIFY_HOME/avd"
+export PATH="$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator:$PATH"
+
+ADB=(adb -s "$SERIAL")
+EMULATOR="$ANDROID_HOME/emulator/emulator"
+
+die() { echo "verify-julep: $*" >&2; exit 1; }
+
+require_state() {
+  [[ -f "$STATE_FILE" ]] || die "no instance state at $STATE_FILE. Run: verify-julep launch"
+  # shellcheck disable=SC1090
+  source "$STATE_FILE"
+  ADB=(adb -s "$SERIAL")
+}
+
+aapt_bin() {
+  local tools
+  tools="$(ls -d "$ANDROID_HOME"/build-tools/* 2>/dev/null | sort -V | tail -1)"
+  [[ -n "$tools" && -x "$tools/aapt" ]] || die "aapt not found under $ANDROID_HOME/build-tools"
+  echo "$tools/aapt"
+}
+
+apk_version_name() {
+  "$(aapt_bin)" dump badging "$1" | sed -n "s/.*versionName='\([^']*\)'.*/\1/p" | head -1
+}
+
+installed_version_name() {
+  "${ADB[@]}" shell dumpsys package "$PACKAGE" | sed -n 's/.*versionName=//p' | head -1 | tr -d '\r'
+}
+
+ensure_avd() {
+  mkdir -p "$ANDROID_AVD_HOME/${AVD_NAME}.avd" "$VERIFY_HOME/run"
+  local ini="$ANDROID_AVD_HOME/${AVD_NAME}.ini"
+  local cfg="$ANDROID_AVD_HOME/${AVD_NAME}.avd/config.ini"
+  local sysdir="system-images/android-36/google_apis_playstore/x86_64"
+  [[ -d "$ANDROID_HOME/$sysdir" ]] || die "system image missing: $ANDROID_HOME/$sysdir"
+  cat > "$ini" <<EOF
+avd.ini.encoding=UTF-8
+path=$ANDROID_AVD_HOME/${AVD_NAME}.avd
+path.rel=avd/${AVD_NAME}.avd
+target=android-36
+EOF
+  cat > "$cfg" <<EOF
+PlayStore.enabled=true
+abi.type=x86_64
+avd.ini.displayname=$AVD_NAME
+avd.ini.encoding=UTF-8
+disk.dataPartition.size=2048M
+hw.accelerometer=yes
+hw.audioInput=no
+hw.battery=yes
+hw.cpu.arch=x86_64
+hw.cpu.ncore=2
+hw.dPad=no
+hw.device.manufacturer=Google
+hw.device.name=pixel_6
+hw.gps=yes
+hw.gpu.enabled=yes
+hw.gpu.mode=swiftshader_indirect
+hw.initialOrientation=portrait
+hw.keyboard=yes
+hw.lcd.density=420
+hw.lcd.height=2400
+hw.lcd.width=1080
+hw.mainKeys=no
+hw.ramSize=2048
+hw.sdCard=no
+hw.sensors.orientation=yes
+hw.sensors.proximity=yes
+image.sysdir.1=$sysdir/
+skin.dynamic=yes
+skin.name=pixel_6
+skin.path=$ANDROID_HOME/skins/pixel_6
+tag.display=Google Play
+tag.id=google_apis_playstore
+tag.ids=google_apis_playstore
+target=android-36
+vm.heapSize=256
+EOF
+}
+
+port_in_use() {
+  lsof -nP -iTCP:"$PORT" -sTCP:LISTEN >/dev/null 2>&1
+}
+
+write_state() {
+  mkdir -p "$VERIFY_HOME/run"
+  cat > "$STATE_FILE" <<EOF
+SERIAL=$SERIAL
+PORT=$PORT
+PID=$1
+AVD_NAME=$AVD_NAME
+VERIFY_HOME=$VERIFY_HOME
+PACKAGE=$PACKAGE
+APK=$2
+EOF
+}
+
+wait_boot() {
+  local i boot
+  "${ADB[@]}" wait-for-device || die "adb wait-for-device failed for $SERIAL. Log: $VERIFY_HOME/run/emulator.log"
+  for i in $(seq 1 180); do
+    boot="$("${ADB[@]}" shell getprop sys.boot_completed 2>/dev/null | tr -d '\r' || true)"
+    if [[ "$boot" == "1" ]]; then
+      if "${ADB[@]}" shell pm path android >/dev/null 2>&1; then
+        return 0
+      fi
+    fi
+    if (( i % 15 == 0 )); then
+      echo "waiting for boot ($i) sys.boot_completed=${boot:-empty}"
+    fi
+    sleep 2
+  done
+  die "emulator $SERIAL did not finish booting. Log: $VERIFY_HOME/run/emulator.log"
+}
+
+dismiss_setup() {
+  "${ADB[@]}" shell input keyevent 82 >/dev/null 2>&1 || true
+  "${ADB[@]}" shell wm dismiss-keyguard >/dev/null 2>&1 || true
+  "${ADB[@]}" shell settings put global device_provisioned 1 >/dev/null 2>&1 || true
+  "${ADB[@]}" shell settings put secure user_setup_complete 1 >/dev/null 2>&1 || true
+  "${ADB[@]}" shell settings put global window_animation_scale 0 >/dev/null 2>&1 || true
+  "${ADB[@]}" shell settings put global transition_animation_scale 0 >/dev/null 2>&1 || true
+  "${ADB[@]}" shell settings put global animator_duration_scale 0 >/dev/null 2>&1 || true
+}
+
+device_year() {
+  "${ADB[@]}" shell date +%Y | tr -d '\r'
+}
+
+pull_db() {
+  local dest="$1"
+  mkdir -p "$(dirname "$dest")"
+  rm -f "$dest" "$dest-wal" "$dest-shm"
+  "${ADB[@]}" exec-out run-as "$PACKAGE" cat databases/julep.db > "$dest"
+  [[ -s "$dest" ]] || die "julep.db is empty or missing. Launch the app once so Room creates it."
+  if "${ADB[@]}" exec-out run-as "$PACKAGE" cat databases/julep.db-wal > "$dest-wal" 2>/dev/null; then
+    if [[ ! -s "$dest-wal" ]]; then
+      rm -f "$dest-wal"
+    fi
+  else
+    rm -f "$dest-wal"
+  fi
+  if [[ -f "$dest-wal" ]]; then
+    "${ADB[@]}" exec-out run-as "$PACKAGE" cat databases/julep.db-shm > "$dest-shm" 2>/dev/null || rm -f "$dest-shm"
+    sqlite3 "$dest" "PRAGMA wal_checkpoint(TRUNCATE);"
+    rm -f "$dest-wal" "$dest-shm"
+  fi
+}
+
+push_db() {
+  local src="$1"
+  local app_dir size
+  app_dir="$("${ADB[@]}" shell run-as "$PACKAGE" pwd | tr -d '\r')"
+  [[ -n "$app_dir" ]] || die "run-as pwd failed for $PACKAGE"
+  "${ADB[@]}" shell am force-stop "$PACKAGE" >/dev/null
+  "${ADB[@]}" shell run-as "$PACKAGE" mkdir -p databases
+  "${ADB[@]}" shell run-as "$PACKAGE" rm -f databases/julep.db-wal databases/julep.db-shm databases/julep.db-journal
+  # One remote-shell string so `>` and `&&` run inside run-as, not in adb's shell.
+  # stdin is the base64 payload; adb shell forwards it to that sh.
+  base64 < "$src" | "${ADB[@]}" shell "run-as $PACKAGE sh -c 'cd \"$app_dir\" && base64 -d > databases/julep.db'"
+  size="$("${ADB[@]}" shell run-as "$PACKAGE" wc -c databases/julep.db | tr -d '\r' | awk '{print $1}')"
+  [[ "${size:-0}" -gt 1000 ]] || die "pushed julep.db is too small (size=${size:-0}, cwd=$app_dir)"
+}
+
+cmd_seed() {
+  require_state
+  local year db
+  year="$(device_year)"
+  db="$VERIFY_HOME/run/julep.db"
+  pull_db "$db"
+  sqlite3 "$db" <<SQL
+PRAGMA foreign_keys=OFF;
+DELETE FROM pending_sync_task;
+DELETE FROM shared_expense_settlement;
+DELETE FROM shared_expense_entry_detail;
+DELETE FROM shared_expense_configuration_detail;
+DELETE FROM shared_expense_configuration;
+DELETE FROM subcategory_monthly_balance;
+DELETE FROM entry_history;
+DELETE FROM subcategory_row;
+DELETE FROM subcategory;
+DELETE FROM category;
+DELETE FROM external_sheet_ref;
+INSERT INTO external_sheet_ref(uid, year, sheet_id) VALUES (1, $year, 'verify-no-sheet');
+INSERT INTO category(uid, external_id, name, type, icon_ref, created_on) VALUES
+  (1, 'verify-exp-1', 'Gastos diarios', 'EXPENSE', '', '2026-01-01T12:00:00'),
+  (2, 'verify-inc-1', 'Sueldo', 'INCOME', '', '2026-01-01T12:00:00');
+INSERT INTO subcategory(uid, category_id, external_id, name, icon_ref, created_on) VALUES
+  (1, 1, 'verify-sub-1', 'Supermercado', '', '2026-01-01T12:00:00'),
+  (2, 2, 'verify-sub-2', 'Mensual', '', '2026-01-01T12:00:00');
+INSERT INTO subcategory_row(subcategory_id, row_number) VALUES (1, 12), (2, 8);
+SQL
+  push_db "$db"
+  echo "seeded julep.db year=$year sheet_id=verify-no-sheet categories=Gastos diarios,Sueldo"
+}
+
+dump_xml() {
+  local out="$1"
+  local remote="/sdcard/julep-verify-uidump.xml"
+  local i
+  mkdir -p "$(dirname "$out")"
+  for i in 1 2 3 4 5; do
+    if "${ADB[@]}" shell uiautomator dump "$remote" >/dev/null 2>&1; then
+      "${ADB[@]}" exec-out cat "$remote" > "$out"
+      if [[ -s "$out" ]] && grep -q "<hierarchy" "$out"; then
+        return 0
+      fi
+    fi
+    sleep 1
+  done
+  die "uiautomator dump failed for $SERIAL"
+}
+
+cmd_ui_dump() {
+  require_state
+  local out=""
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --out) out="$2"; shift 2 ;;
+      *) die "unknown arg: $1" ;;
+    esac
+  done
+  [[ -n "$out" ]] || die "ui dump requires --out <path>"
+  dump_xml "$out"
+  python3 - "$out" <<'PY'
+import sys, xml.etree.ElementTree as ET
+root = ET.parse(sys.argv[1]).getroot()
+for node in root.iter("node"):
+    text = node.attrib.get("text") or ""
+    desc = node.attrib.get("content-desc") or ""
+    if text or desc:
+        bounds = node.attrib.get("bounds", "")
+        clickable = node.attrib.get("clickable", "false")
+        print(f"text={text!r} desc={desc!r} clickable={clickable} bounds={bounds}")
+PY
+}
+
+pick_bounds() {
+  local mode="$1" value="$2" xml="$3"
+  python3 - "$mode" "$value" "$xml" <<'PY'
+import sys, xml.etree.ElementTree as ET
+mode, value, path = sys.argv[1:]
+root = ET.parse(path).getroot()
+matches = []
+for node in root.iter("node"):
+    text = node.attrib.get("text") or ""
+    desc = node.attrib.get("content-desc") or ""
+    hit = (mode == "text" and (text == value or desc == value)) or (mode == "desc" and desc == value)
+    if not hit:
+        continue
+    bounds = node.attrib.get("bounds") or ""
+    parts = bounds.replace("][", ",").replace("[", "").replace("]", "").split(",")
+    if len(parts) != 4:
+        continue
+    x1, y1, x2, y2 = map(int, parts)
+    area = max(1, (x2 - x1) * (y2 - y1))
+    clickable = node.attrib.get("clickable") == "true"
+    # Clickable node first. Otherwise the lower node, so a bottom-bar label
+    # wins over a screen title that repeats the same word.
+    matches.append((0 if clickable else 1, -y2, area, (x1 + x2) // 2, (y1 + y2) // 2))
+if not matches:
+    sys.exit(2)
+matches.sort()
+_, _, _, x, y = matches[0]
+print(f"{x} {y}")
+PY
+}
+
+cmd_ui_tap() {
+  require_state
+  local mode="" value=""
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --text) mode="text"; value="$2"; shift 2 ;;
+      --desc) mode="desc"; value="$2"; shift 2 ;;
+      *) die "unknown arg: $1" ;;
+    esac
+  done
+  [[ -n "$mode" && -n "$value" ]] || die "ui tap requires --text <label> or --desc <content-desc>"
+  local xml="$VERIFY_HOME/run/uidump.xml"
+  dump_xml "$xml"
+  local xy
+  if ! xy="$(pick_bounds "$mode" "$value" "$xml")"; then
+    die "no node with $mode=$value. Run: verify-julep ui dump --out <path>"
+  fi
+  # shellcheck disable=SC2086
+  "${ADB[@]}" shell input tap $xy
+  echo "tapped $mode=$value at $xy"
+}
+
+cmd_ui_text() {
+  require_state
+  local label="" value=""
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --text) label="$2"; shift 2 ;;
+      --value) value="$2"; shift 2 ;;
+      *) die "unknown arg: $1" ;;
+    esac
+  done
+  [[ -n "$label" && -n "$value" ]] || die "ui text requires --text <label> --value <string>"
+  cmd_ui_tap --text "$label"
+  sleep 0.4
+  local encoded="${value// /%s}"
+  "${ADB[@]}" shell input text "$encoded"
+  echo "entered value into $label"
+}
+
+dismiss_blockers() {
+  local xml="$1"
+  grep -q "isn't responding" "$xml" || return 0
+  local xy
+  xy="$(pick_bounds text "Wait" "$xml" || true)"
+  [[ -n "$xy" ]] || return 0
+  echo "dismissing not-responding dialog"
+  # shellcheck disable=SC2086
+  "${ADB[@]}" shell input tap $xy
+  sleep 2
+}
+
+cmd_ui_wait() {
+  require_state
+  local text="" timeout="20"
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --text) text="$2"; shift 2 ;;
+      --timeout) timeout="$2"; shift 2 ;;
+      *) die "unknown arg: $1" ;;
+    esac
+  done
+  [[ -n "$text" ]] || die "ui wait requires --text <label>"
+  local xml="$VERIFY_HOME/run/uidump.xml"
+  local i
+  for i in $(seq 1 "$timeout"); do
+    if ! dump_xml "$xml"; then
+      sleep 1
+      continue
+    fi
+    dismiss_blockers "$xml"
+    if python3 - "$text" "$xml" <<'PY'
+import sys, xml.etree.ElementTree as ET
+text, path = sys.argv[1:]
+try:
+    root = ET.parse(path).getroot()
+except ET.ParseError:
+    sys.exit(1)
+for node in root.iter("node"):
+    if node.attrib.get("text") == text or node.attrib.get("content-desc") == text:
+        sys.exit(0)
+sys.exit(1)
+PY
+    then
+      echo "visible: $text"
+      return 0
+    fi
+    sleep 1
+  done
+  die "timed out waiting for text=$text"
+}
+
+cmd_ui_screenshot() {
+  require_state
+  local out=""
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --out) out="$2"; shift 2 ;;
+      *) die "unknown arg: $1" ;;
+    esac
+  done
+  [[ -n "$out" ]] || die "ui screenshot requires --out <path>"
+  mkdir -p "$(dirname "$out")"
+  "${ADB[@]}" exec-out screencap -p > "$out"
+  [[ -s "$out" ]] || die "screenshot was empty"
+  echo "screenshot $out"
+}
+
+cmd_db_query() {
+  require_state
+  local sql="${1:-}"
+  [[ -n "$sql" ]] || die "db query requires a SQL string"
+  local db="$VERIFY_HOME/run/julep-query.db"
+  pull_db "$db"
+  sqlite3 -header -column "$db" "$sql"
+}
+
+cmd_doctor() {
+  require_state
+  local problems=0
+  note() { echo "doctor: $*"; }
+  bad() { echo "doctor: FAIL $*"; problems=$((problems + 1)); }
+  if kill -0 "$PID" 2>/dev/null; then
+    note "emulator pid $PID is alive"
+  else
+    bad "emulator pid $PID is not running"
+  fi
+  local cmdline
+  cmdline="$(ps -p "$PID" -o args= 2>/dev/null || true)"
+  if [[ "$cmdline" == *"$AVD_NAME"* && "$cmdline" == *"-port $PORT"* ]]; then
+    note "pid command owns avd $AVD_NAME port $PORT"
+  else
+    bad "pid $PID command does not own avd $AVD_NAME port $PORT ($cmdline)"
+  fi
+  local state
+  state="$("${ADB[@]}" get-state 2>/dev/null | tr -d '\r' || true)"
+  if [[ "$state" == "device" ]]; then
+    note "adb state device ($SERIAL)"
+  else
+    bad "adb state is '$state' for $SERIAL"
+  fi
+  local boot
+  boot="$("${ADB[@]}" shell getprop sys.boot_completed 2>/dev/null | tr -d '\r' || true)"
+  if [[ "$boot" == "1" ]]; then
+    note "sys.boot_completed=1"
+  else
+    bad "sys.boot_completed=$boot"
+  fi
+  if [[ -f "$APK" ]]; then
+    local built installed
+    built="$(apk_version_name "$APK")"
+    installed="$(installed_version_name)"
+    if [[ -n "$built" && "$built" == "$installed" ]]; then
+      note "versionName $installed matches $APK"
+    else
+      bad "versionName installed='$installed' apk='$built'"
+    fi
+  else
+    bad "recorded apk missing: $APK"
+  fi
+  if "${ADB[@]}" shell run-as "$PACKAGE" ls databases/julep.db >/dev/null 2>&1; then
+    note "run-as can read databases/julep.db"
+  else
+    bad "run-as cannot read databases/julep.db"
+  fi
+  if [[ "$problems" -gt 0 ]]; then
+    die "$problems doctor check(s) failed"
+  fi
+  note "instance is worth driving"
+}
+
+cmd_launch() {
+  if [[ -f "$STATE_FILE" ]]; then
+    local existing_pid existing_serial
+    existing_pid="$(sed -n 's/^PID=//p' "$STATE_FILE")"
+    existing_serial="$(sed -n 's/^SERIAL=//p' "$STATE_FILE")"
+    if [[ -n "$existing_pid" ]] && kill -0 "$existing_pid" 2>/dev/null; then
+      die "instance already running (pid $existing_pid, $existing_serial). Run doctor, or stop it before launching another. A second instance needs JULEP_VERIFY_HOME and JULEP_VERIFY_PORT."
+    fi
+  fi
+  if port_in_use; then
+    die "TCP $PORT is already in use. Refuse to attach to an emulator this run did not start. Set JULEP_VERIFY_PORT to a free even port."
+  fi
+  [[ -x "$EMULATOR" ]] || die "emulator binary missing: $EMULATOR"
+  command -v sqlite3 >/dev/null || die "sqlite3 is required on the host"
+  ensure_avd
+  echo "building $PACKAGE"
+  (cd "$REPO_ROOT" && ./gradlew assembleDebug)
+  local apk="$REPO_ROOT/app/build/outputs/apk/debug/app-debug.apk"
+  [[ -f "$apk" ]] || die "apk missing after assembleDebug: $apk"
+  echo "starting $AVD_NAME on $SERIAL"
+  # setsid so the emulator outlives this script. The shell that invoked launch
+  # must not take the emulator down when launch returns.
+  python3 - "$EMULATOR" "$AVD_NAME" "$PORT" "$VERIFY_HOME/run/emulator.log" <<'PY' &
+import os, sys
+emulator, avd, port, log = sys.argv[1:]
+os.setsid()
+fd = os.open(log, os.O_WRONLY | os.O_CREAT | os.O_APPEND, 0o644)
+os.dup2(fd, 1)
+os.dup2(fd, 2)
+os.close(fd)
+os.execv(emulator, [
+    emulator,
+    "-avd", avd,
+    "-port", port,
+    "-no-window",
+    "-no-audio",
+    "-no-boot-anim",
+    "-no-snapshot",
+    "-gpu", "swiftshader_indirect",
+    "-netdelay", "none",
+    "-netspeed", "full",
+])
+PY
+  local pid=$!
+  write_state "$pid" "$apk"
+  wait_boot
+  dismiss_setup
+  echo "installing $apk"
+  "${ADB[@]}" install -r -d "$apk" >/dev/null
+  "${ADB[@]}" shell pm clear "$PACKAGE" >/dev/null
+  "${ADB[@]}" shell am start -n "$ACTIVITY" >/dev/null
+  local i
+  for i in $(seq 1 30); do
+    if "${ADB[@]}" shell run-as "$PACKAGE" ls databases/julep.db >/dev/null 2>&1; then
+      break
+    fi
+    sleep 1
+  done
+  "${ADB[@]}" shell run-as "$PACKAGE" ls databases/julep.db >/dev/null 2>&1 \
+    || die "Room did not create databases/julep.db. Logcat: adb -s $SERIAL logcat -d -t 80"
+  "${ADB[@]}" shell am force-stop "$PACKAGE" >/dev/null
+  cmd_seed
+  "${ADB[@]}" shell am start -n "$ACTIVITY" >/dev/null
+  cmd_ui_wait --text "Gastos diarios" --timeout 40
+  echo "ready serial=$SERIAL pid=$pid version=$(installed_version_name)"
+}
+
+cmd_stop() {
+  if [[ ! -f "$STATE_FILE" ]]; then
+    echo "no instance state. nothing to stop"
+    return 0
+  fi
+  # shellcheck disable=SC1090
+  source "$STATE_FILE"
+  ADB=(adb -s "$SERIAL")
+  if "${ADB[@]}" get-state >/dev/null 2>&1; then
+    "${ADB[@]}" emu kill >/dev/null 2>&1 || true
+  fi
+  local i
+  for i in $(seq 1 20); do
+    if ! kill -0 "${PID:-0}" 2>/dev/null; then
+      break
+    fi
+    sleep 1
+  done
+  if kill -0 "${PID:-0}" 2>/dev/null; then
+    kill -TERM -"${PID}" 2>/dev/null || kill "$PID" 2>/dev/null || true
+    sleep 1
+    kill -KILL -"${PID}" 2>/dev/null || kill -9 "$PID" 2>/dev/null || true
+  fi
+  rm -f "$STATE_FILE"
+  echo "stopped serial=$SERIAL pid=${PID:-unknown}. evidence kept at $EVIDENCE_ROOT"
+}
+
+usage() {
+  cat <<EOF
+usage: verify-julep <command>
+
+  launch
+  doctor
+  seed
+  ui dump --out <path>
+  ui tap --text <label> | --desc <content-desc>
+  ui text --text <label> --value <string>
+  ui wait --text <label> [--timeout <seconds>]
+  ui screenshot --out <path>
+  db query <sql>
+  stop
+EOF
+}
+
+main() {
+  local cmd="${1:-}"
+  shift || true
+  case "$cmd" in
+    launch) cmd_launch "$@" ;;
+    doctor) cmd_doctor "$@" ;;
+    seed) cmd_seed "$@" ;;
+    ui)
+      local sub="${1:-}"
+      shift || true
+      case "$sub" in
+        dump) cmd_ui_dump "$@" ;;
+        tap) cmd_ui_tap "$@" ;;
+        text) cmd_ui_text "$@" ;;
+        wait) cmd_ui_wait "$@" ;;
+        screenshot) cmd_ui_screenshot "$@" ;;
+        *) die "unknown ui command: $sub" ;;
+      esac
+      ;;
+    db)
+      local sub="${1:-}"
+      shift || true
+      case "$sub" in
+        query) cmd_db_query "$@" ;;
+        *) die "unknown db command: $sub" ;;
+      esac
+      ;;
+    stop) cmd_stop "$@" ;;
+    *) usage; exit 1 ;;
+  esac
+}
+
+main "$@"
